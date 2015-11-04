@@ -15,7 +15,9 @@ class StatsAggregator() extends Actor with ActorLogging {
   var usersPerBrowser: UsersPerBrowser = Map.empty[String, Int]
   var usersPerReferrer: UsersPerReferrer = Map.empty[String, Int]
 
-  override def receive: Receive = {
+  override def receive: Receive = handleSessionData.orElse(fetchData)
+
+  private def handleSessionData: Receive = {
     case SessionData(requests) => {
       log.info(s"Aggregating session data for ${requests.size} requests.")
       requestsPerBrowser = mergeMaps(requestsPerBrowser, computeRequestsPerBrowser(requests))
@@ -26,6 +28,40 @@ class StatsAggregator() extends Actor with ActorLogging {
       sinksPerPage = top(3, mergeMaps(sinksPerPage, computeSinksPerPage(requests)))
       usersPerBrowser = top(2, mergeMaps(usersPerBrowser, computeUsersPerBrowser(requests)))
       usersPerReferrer = top(2, mergeMaps(usersPerReferrer, computeUsersPerReferrer(requests)))
+    }
+  }
+
+  private def fetchData: Receive = {
+    case DataRequest.RequestsPerBrowser.Request => {
+      sender() ! DataRequest.RequestsPerBrowser.Response(requestsPerBrowser=requestsPerBrowser)
+    }
+
+    case DataRequest.RequestsByMinute.Request => {
+      sender() ! DataRequest.RequestsByMinute.Response(requestsByMinute=requestsByMinute)
+    }
+
+    case DataRequest.RequestsPerPage.Request => {
+      sender() ! DataRequest.RequestsPerPage.Response(requestsPerPage=requestsPerPage)
+    }
+
+    case DataRequest.TimePerUrl.Request => {
+      sender() ! DataRequest.TimePerUrl.Response(timePerUrl=timePerUrl)
+    }
+
+    case DataRequest.LandingsPerPage.Request => {
+      sender() ! DataRequest.LandingsPerPage.Response(landingsPerPage=landingsPerPage)
+    }
+
+    case DataRequest.SinksPerPage.Request => {
+      sender() ! DataRequest.SinksPerPage.Response(sinksPerPage=sinksPerPage)
+    }
+
+    case DataRequest.UsersPerBrowser.Request => {
+      sender() ! DataRequest.UsersPerBrowser.Response(usersPerBrowser=usersPerBrowser)
+    }
+
+    case DataRequest.UsersPerReferrer.Request => {
+      sender() ! DataRequest.UsersPerReferrer.Response(usersPerReferrer=usersPerReferrer)
     }
   }
 
@@ -96,4 +132,42 @@ object StatsAggregator {
   type SinksPerPage = Map[String, Int]  // [page_num, num_sink_requests]
   type UsersPerBrowser = Map[String, Int]  // [browser, num_users]
   type UsersPerReferrer = Map[String, Int]  // [referrer, num_users]
+
+  sealed trait DataRequest {
+    case object Request
+  }
+
+  case object DataRequest {
+    case object RequestsPerBrowser extends DataRequest {
+      case class Response(requestsPerBrowser: RequestsPerBrowser)
+    }
+
+    case object RequestsByMinute extends DataRequest {
+      case class Response(requestsByMinute: RequestsByMinute)
+    }
+
+    case object RequestsPerPage extends DataRequest {
+      case class Response(requestsPerPage: RequestsPerPage)
+    }
+
+    case object TimePerUrl extends DataRequest {
+      case class Response(timePerUrl: TimePerUrl)
+    }
+
+    case object LandingsPerPage extends DataRequest {
+      case class Response(landingsPerPage: LandingsPerPage)
+    }
+
+    case object SinksPerPage extends DataRequest {
+      case class Response(sinksPerPage: SinksPerPage)
+    }
+
+    case object UsersPerBrowser extends DataRequest {
+      case class Response(usersPerBrowser: UsersPerBrowser)
+    }
+
+    case object UsersPerReferrer extends DataRequest {
+      case class Response(usersPerReferrer: UsersPerReferrer)
+    }
+  }
 }
