@@ -1,6 +1,6 @@
 package com.boldradius.sdf.akka
 
-import akka.actor.ActorSystem
+import akka.actor._
 import com.boldradius.sdf.akka.RequestProducer._
 import scala.io.StdIn
 import scala.concurrent.duration._
@@ -15,7 +15,7 @@ object RequestSimulationExampleApp {
 
 class RequestSimulationExampleApp(system: ActorSystem) {
   val producer = system.actorOf(RequestProducer.props(100), "producerActor")
-  val consumer = system.actorOf(Consumer.props, "consumer")
+  val consumer = PdAkkaActor.createActor(system, Consumer.Args, Some("consumer"))
 
   def run(): Unit = {
     // Tell the producer to start working and to send messages to the consumer
