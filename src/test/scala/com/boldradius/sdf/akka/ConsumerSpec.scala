@@ -66,7 +66,6 @@ class ConsumerSpec extends BaseAkkaSpec {
 
       val consumer = actor("consumer")(new Consumer {
         override def createSessionLog(sessionId: Long) = {
-          println(s"createSessionLog called with $sessionId")
           if (sessionId == sessionId1) sessionLog1.ref
           else if (sessionId == sessionId2) sessionLog2.ref
           else unusedSessionLog.ref
