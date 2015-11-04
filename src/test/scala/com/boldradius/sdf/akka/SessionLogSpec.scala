@@ -8,8 +8,7 @@ class SessionLogSpec extends BaseAkkaSpec {
     "not reset the receiveTimeout" in {
       val statsProbe = TestProbe()
       val sessionLog = system.actorOf(SessionLog.props(0, statsProbe.ref), "session-log")
-      val sessionTimeout = Duration(
-        system.settings.config.getDuration("request-simulator.session-timeout", SECONDS), SECONDS)
+      val sessionTimeout = Settings(system).REQUEST_SIMULATOR_SESSION_TIMEOUT
 
       // Send an unhandled message...
       sessionLog ! "unhandled message type!"
@@ -27,8 +26,7 @@ class SessionLogSpec extends BaseAkkaSpec {
     "send a message to the stats actor after the timeout" in {
       val statsProbe = TestProbe()
       val sessionLog = system.actorOf(SessionLog.props(0, statsProbe.ref), "session-log")
-      val sessionTimeout = Duration(
-        system.settings.config.getDuration("request-simulator.session-timeout", SECONDS), SECONDS)
+      val sessionTimeout = Settings(system).REQUEST_SIMULATOR_SESSION_TIMEOUT
 
       // Then expect that we receive a Timeout around the time of the original timeout.
       statsProbe.within(sessionTimeout - (250 milliseconds), sessionTimeout + (250 milliseconds)) {
