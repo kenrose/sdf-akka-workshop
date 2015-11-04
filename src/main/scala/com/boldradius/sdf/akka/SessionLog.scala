@@ -26,8 +26,6 @@ class SessionLog(sessionId: Long, statsActor: ActorRef) extends Actor with Actor
       context.setReceiveTimeout(Duration.Undefined)
       context.stop(self)
     }
-
-    //case msg => log.info(s"$self received message $msg")
   }
 }
 
