@@ -1,6 +1,7 @@
 package com.boldradius.sdf.akka
 
 import akka.actor._
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
 import scala.concurrent.duration._
 
 class StatsAggregator() extends Actor with ActorLogging {
@@ -42,19 +43,19 @@ class StatsAggregator() extends Actor with ActorLogging {
       sender() ! DataRequest.PageVisitDistribution.respond(requestsPerPage)
 
     case DataRequest.AverageVisitTimePerUrl.Request =>
-      sender() ! DataRequest.AverageVisitTimePerUrl.respond(timePerUrl)
+      sender() ! DataRequest.AverageVisitTimePerUrl.respond(timePerUrl, requestsPerPage)
 
     case DataRequest.TopLandingPages.Request =>
-      sender() ! DataRequest.TopLandingPages.Response(landingsPerPage)
+      sender() ! DataRequest.TopLandingPages.respond(landingsPerPage)
 
     case DataRequest.TopSinkPages.Request =>
-      sender() ! DataRequest.TopSinkPages.Response(sinksPerPage)
+      sender() ! DataRequest.TopSinkPages.respond(sinksPerPage)
 
     case DataRequest.TopBrowsers.Request =>
-      sender() ! DataRequest.TopBrowsers.Response(usersPerBrowser)
+      sender() ! DataRequest.TopBrowsers.respond(usersPerBrowser)
 
     case DataRequest.TopReferrers.Request =>
-      sender() ! DataRequest.TopReferrers.Response(usersPerReferrer)
+      sender() ! DataRequest.TopReferrers.respond(usersPerReferrer)
   }
 
   private def mergeMaps[T](a: Map[T, Int], b: Map[T, Int]): Map[T, Int] =
@@ -84,7 +85,6 @@ object StatsAggregator {
   sealed abstract class DataRequest[ComputeType <: Map[_, _], ResponseType] {
     case object Request
     def compute(requests: Seq[Request]): ComputeType
-    def respond(data: ComputeType): Response
 
     case class Response(response: ResponseType)
 
@@ -128,7 +128,11 @@ object StatsAggregator {
           case (sourcePage, sinkPage) => (sourcePage.url, sinkPage.timestamp - sourcePage.timestamp)
         }.groupBy(_._1).mapValues(_.map(_._2).sum.toInt)
 
-      def respond(data: TimePerUrl) = Response(data)
+      def respond(time: TimePerUrl, requests: RequestsPerPage) = {
+        time.map {
+          case (url, totalTime) => totalTime.toDouble / requests(url)
+        }
+      }
     }
 
     case object TopLandingPages extends DataRequest[LandingsPerPage, LandingsPerPage] {
