@@ -12,7 +12,7 @@ object RequestSimulationExampleApp extends App {
   val producer = system.actorOf(RequestProducer.props(100), "producerActor")
 
   // TODO: replace dead letters with your own consumer actor
-  val consumer = system.deadLetters
+  val consumer = system.actorOf(Consumer.props, "consumer")
 
   // Tell the producer to start working and to send messages to the consumer
   producer ! Start(consumer)
