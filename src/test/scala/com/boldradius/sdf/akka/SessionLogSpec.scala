@@ -23,5 +23,18 @@ class SessionLogSpec extends BaseAkkaSpec {
       }
       system.stop(sessionLog)
     }
+
+    "send a message to the stats actor after the timeout" in {
+      val statsProbe = TestProbe()
+      val sessionLog = system.actorOf(SessionLog.props(0, statsProbe.ref), "session-log")
+      val sessionTimeout = Duration(
+        system.settings.config.getDuration("request-simulator.session-timeout", SECONDS), SECONDS)
+
+      // Then expect that we receive a Timeout around the time of the original timeout.
+      statsProbe.within(sessionTimeout - (250 milliseconds), sessionTimeout + (250 milliseconds)) {
+        statsProbe.expectMsg("TODO REPLACE ME WITH RESULTS")
+      }
+      system.stop(sessionLog)
+    }
   }
 }
