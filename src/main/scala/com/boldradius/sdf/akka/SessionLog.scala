@@ -1,18 +1,16 @@
 package com.boldradius.sdf.akka
 
 import scala.collection.mutable.MutableList
-import scala.concurrent.duration.{Duration, SECONDS => Seconds}
+import scala.concurrent.duration.Duration
 import akka.actor._
 
-class SessionLog(sessionId: Long, statsActor: ActorRef) extends Actor with ActorLogging {
+class SessionLog(sessionId: Long, statsActor: ActorRef) extends Actor with ActorLogging with SettingsExtension {
   log.info(s"SessionLog ${self} created for sessionId ${sessionId}")
 
   val requests = MutableList[Request]()
 
   import SessionLog._
-  private val sessionTimeout = Duration(
-    context.system.settings.config.getDuration("request-simulator.session-timeout", Seconds),
-    Seconds)
+  private val sessionTimeout = settings.REQUEST_SIMULATOR_SESSION_TIMEOUT
   context.setReceiveTimeout(sessionTimeout)
 
   override def receive: Receive = {
