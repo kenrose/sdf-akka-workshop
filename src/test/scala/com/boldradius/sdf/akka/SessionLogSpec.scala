@@ -4,11 +4,11 @@ import akka.actor._
 import akka.testkit._
 
 class SessionLogSpec extends BaseAkkaSpec {
-  "Sending any message to Consumer" should {
+  "Sending any message to SessionLog" should {
     "result in logging the message" in {
-      val consumer = system.actorOf(SessionLog.Def(66).props, "session-log")
+      val sessionLog = PdAkkaActor.createActor(system, SessionLog.Args(66), Some("session-log"))
       EventFilter.info(pattern = ".*received message.*", occurrences = 1) intercept {
-        consumer ! "Hello"
+        sessionLog ! "Hello"
       }
     }
   }

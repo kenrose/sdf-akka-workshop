@@ -5,22 +5,19 @@ import akka.actor._
 import PdAkkaActor._
 
 trait PdAkkaActor extends Actor with ActorLogging {
-  def createChild(actorDef: Def) = {
-    context.actorOf(actorDef.props)
-  }
-  def createChild(actorDef: Def, name: String) = {
-    context.actorOf(actorDef.props, name)
+  def createChild(actorArgs: Args, actorName: Option[String] = None): ActorRef = {
+    createActor(context, actorArgs, actorName)
   }
 }
 
 object PdAkkaActor {
-  trait Def {
-    val props: Props
+  abstract class Args(actorClass: Class[_ <: PdAkkaActor]) {
+    val asProps: Props = Props(actorClass, this)
   }
-  abstract class DefNoParams[Actor <: PdAkkaActor](actorClass: Class[Actor]) extends Def {
-    override val props = Props(actorClass)
-  }
-  abstract class DefWithParams[Actor <: PdAkkaActor](actorClass: Class[Actor]) extends Def {
-    override val props = Props(actorClass, this)
+
+  def createActor(refFactory: ActorRefFactory, actorArgs: Args, actorName: Option[String] = None)
+  : ActorRef = actorName match {
+    case Some(name) => refFactory.actorOf(actorArgs.asProps, name)
+    case None => refFactory.actorOf(actorArgs.asProps)
   }
 }

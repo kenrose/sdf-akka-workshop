@@ -4,15 +4,14 @@ import scala.collection.mutable.MutableList
 import akka.actor._
 
 import SessionLog._
-
-class SessionLog(d: Def) extends PdAkkaActor {
-  log.info(s"SessionLog ${self} created for sessionId ${d.sessionId}")
+class SessionLog(args: Args) extends PdAkkaActor {
+  log.info(s"SessionLog ${self} created for sessionId ${args.sessionId}")
 
   val requests = MutableList[Request]()
 
   override def receive: Receive = {
     case AppendRequest(request) => {
-      log.info(s"Appending request with URL ${request.url} to session ${d.sessionId}")
+      log.info(s"Appending request with URL ${request.url} to session ${args.sessionId}")
       requests += request
     }
 
@@ -22,7 +21,7 @@ class SessionLog(d: Def) extends PdAkkaActor {
 
 // WIP, totally changable
 object SessionLog {
-  case class Def(sessionId: Long) extends PdAkkaActor.DefWithParams(classOf[SessionLog])
+  case class Args(sessionId: Long) extends PdAkkaActor.Args(classOf[SessionLog])
   case class AppendRequest(request: Request)
   case class RequestAppended(request: Request)
 }
