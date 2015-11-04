@@ -1,6 +1,6 @@
 package com.boldradius.sdf.akka
 
-import akka.actor.{ActorRef, Props, ActorLogging, Actor}
+import akka.actor._
 
 class Consumer extends Actor with ActorLogging {
   override def receive: Receive = {

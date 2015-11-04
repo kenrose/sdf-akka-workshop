@@ -1,7 +1,7 @@
 package com.boldradius.sdf.akka
 
 import scala.collection.mutable.MutableList
-import akka.actor.{Props, ActorLogging, Actor}
+import akka.actor._
 
 class SessionLog(sessionId: Long) extends Actor with ActorLogging {
   log.info(s"SessionLog ${self} created for sessionId ${sessionId}")
