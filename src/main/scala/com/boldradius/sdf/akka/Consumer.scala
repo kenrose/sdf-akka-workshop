@@ -8,8 +8,8 @@ class Consumer extends Actor with ActorLogging {
     case msg => log.info(s"Consumer $self received message $msg")
   }
 
-  def findOrCreateActor(sessionId: Long): ActorRef = context.child(sessionId.toString).orElse {
-    context.actorOf(SessionLog.props, sessionId.toString)
+  def findOrCreateActor(sessionId: Long): ActorRef = context.child(sessionId.toString).getOrElse {
+    context.actorOf(SessionLog.props(sessionId), sessionId.toString)
   }
 }
 

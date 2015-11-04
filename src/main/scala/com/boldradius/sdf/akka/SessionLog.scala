@@ -1,8 +1,8 @@
 package com.boldradius.sdf.akka
 
-import akka.actor.{ActorLogging, Actor}
+import akka.actor.{Props, ActorLogging, Actor}
 
-class SessionLog(sessionId: String) extends Actor with ActorLogging {
+class SessionLog(sessionId: Long) extends Actor with ActorLogging {
   log.info(s"SessionLog ${self} created for sessionId ${sessionId}")
 
   override def receive: Receive = {
@@ -12,6 +12,7 @@ class SessionLog(sessionId: String) extends Actor with ActorLogging {
 
 // WIP, totally changable
 object SessionLog {
+  def props(sessionId: Long): Props = Props(new SessionLog(sessionId))
   case class AppendRequest(request: Request)
   case class RequestAppended(request: Request)
 }
