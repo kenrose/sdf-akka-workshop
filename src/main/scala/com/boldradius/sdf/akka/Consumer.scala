@@ -12,7 +12,8 @@ class Consumer extends Actor with ActorLogging {
     context.child(sessionId.toString).getOrElse(createSessionLog(sessionId))
 
   protected def createSessionLog(sessionId: Long): ActorRef =
-    context.actorOf(SessionLog.props(sessionId), sessionId.toString)
+    // TODO: Replace the use of deadLetters here with a Stats actor.
+    context.actorOf(SessionLog.props(sessionId, context.system.deadLetters), sessionId.toString)
 }
 
 object Consumer {

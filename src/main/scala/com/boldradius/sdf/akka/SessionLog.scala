@@ -21,6 +21,7 @@ class SessionLog(sessionId: Long, statsActor: ActorRef) extends Actor with Actor
 
     case ReceiveTimeout => {
       statsActor ! "TODO REPLACE ME WITH RESULTS"
+      context.setReceiveTimeout(Duration.Undefined)
       context stop self
     }
 
