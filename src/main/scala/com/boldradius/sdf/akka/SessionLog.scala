@@ -24,5 +24,4 @@ class SessionLog(sessionId: Long) extends Actor with ActorLogging {
 object SessionLog {
   def props(sessionId: Long): Props = Props(new SessionLog(sessionId))
   case class AppendRequest(request: Request)
-  case class RequestAppended(request: Request)
 }
