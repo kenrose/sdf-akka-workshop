@@ -4,13 +4,15 @@ import akka.actor.{ActorRef, Props, ActorLogging, Actor}
 
 class Consumer extends Actor with ActorLogging {
   override def receive: Receive = {
-    case req: Request => findOrCreateActor(req.sessionId) ! SessionLog.AppendRequest(req)
+    case req: Request => findOrCreateSessionLog(req.sessionId) ! SessionLog.AppendRequest(req)
     case msg => log.info(s"Consumer $self received message $msg")
   }
 
-  def findOrCreateActor(sessionId: Long): ActorRef = context.child(sessionId.toString).getOrElse {
+  protected def findOrCreateSessionLog(sessionId: Long): ActorRef =
+    context.child(sessionId.toString).getOrElse(createSessionLog(sessionId))
+
+  protected def createSessionLog(sessionId: Long): ActorRef =
     context.actorOf(SessionLog.props(sessionId), sessionId.toString)
-  }
 }
 
 object Consumer {
