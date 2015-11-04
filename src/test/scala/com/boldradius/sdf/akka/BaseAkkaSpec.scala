@@ -4,7 +4,7 @@
 
 package com.boldradius.sdf.akka
 
-import akka.actor.{ActorIdentity, ActorRef, ActorSystem, Identify}
+import akka.actor._
 import akka.testkit.{EventFilter, TestEvent, TestProbe}
 import org.scalatest.BeforeAndAfterAll
 
@@ -13,6 +13,7 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 abstract class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll {
 
   implicit class TestProbeOps(probe: TestProbe) {
+    def asProps: Props = Props(classOf[TestProbeProxy], probe)
 
     def expectActor(path: String, max: FiniteDuration = probe.remaining): ActorRef = {
       probe.within(max) {
@@ -37,5 +38,11 @@ abstract class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll {
   override protected def afterAll(): Unit = {
     system.shutdown()
     system.awaitTermination()
+  }
+}
+
+class TestProbeProxy(probe: TestProbe) extends Actor {
+  override def receive: Receive = {
+    case msg => probe.ref forward msg
   }
 }
