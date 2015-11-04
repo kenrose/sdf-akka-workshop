@@ -60,31 +60,27 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
       val minute1 = 1
       val timestamp1 = 1 // fix
       val minute2 = 100
-      val timestamp2 = 1 // fix
+      val timestamp2 = 2 // fix
       val minute3 = 1000
-      val timestamp3 = 1 // fix
+      val timestamp3 = 3 // fix
 
       val requests = MutableList[Request]()
       requests += BaseRequest.copy(timestamp = timestamp1)
-      requests += BaseRequest.copy(timestamp = timestamp1)
       requests += BaseRequest.copy(timestamp = timestamp2)
+      requests += BaseRequest.copy(timestamp = timestamp3)
       statsAggregator ! SessionData(requests)
 
       val resp = Await.result(statsAggregator.ask(DataRequest.BusiestMinute.Request).mapTo[DataRequest.BusiestMinute.Response], 1 second)
-      // expect timestamp1 to be 2
-      // expect timestamp2 to be 1
-      // expect timestamp3 to be 0
+      resp.response shouldBe Map(timestamp3 -> minute3)
 
       requests.clear()
       val BaseRequest2 = BaseRequest.copy(sessionId = 2)
       requests += BaseRequest2.copy(timestamp = timestamp1)
-      requests += BaseRequest2.copy(timestamp = timestamp3)
+      requests += BaseRequest2.copy(timestamp = timestamp2)
       statsAggregator ! SessionData(requests)
 
       val resp2 = Await.result(statsAggregator.ask(DataRequest.BusiestMinute.Request).mapTo[DataRequest.BusiestMinute.Response], 1 second)
-      // expect timestamp1 to be 3
-      // expect timestamp2 to be 1
-      // expect timestamp3 to be 1
+      resp2.response shouldBe Map(timestamp2 -> minute2)
     }
 
     "set page visit distribution correctly" in {

@@ -77,6 +77,7 @@ object StatsAggregator {
   type RequestsPerPage = Map[String, Int]  // [page_name, num_requests]
   type PageVisitDistribution = Map[String, Double]  // [page_name, num_requests]
   type TimePerUrl = Map[String, Int]  // [url, time_in_seconds]
+  type AverageTimePerUrl = Map[String, Double]  // [url, time_in_seconds]
   type LandingsPerPage = Map[String, Int]  // [page_name, num_landing_requests]
   type SinksPerPage = Map[String, Int]  // [page_num, num_sink_requests]
   type UsersPerBrowser = Map[String, Int]  // [browser, num_users]
@@ -121,7 +122,7 @@ object StatsAggregator {
       }
     }
 
-    case object AverageVisitTimePerUrl extends DataRequest[TimePerUrl, TimePerUrl] {
+    case object AverageVisitTimePerUrl extends DataRequest[TimePerUrl, AverageTimePerUrl] {
       def compute(requests: Seq[Request]) =
       // NOTE: The last request is ignored, as we don't know how long the user is on that last page for.
         requests.zip(requests.tail).map {
@@ -129,9 +130,9 @@ object StatsAggregator {
         }.groupBy(_._1).mapValues(_.map(_._2).sum.toInt)
 
       def respond(time: TimePerUrl, requests: RequestsPerPage) = {
-        time.map {
-          case (url, totalTime) => totalTime.toDouble / requests(url)
-        }
+        Response(time.map {
+          case (url, totalTime) => url -> (totalTime.toDouble / requests(url))
+        })
       }
     }
 
