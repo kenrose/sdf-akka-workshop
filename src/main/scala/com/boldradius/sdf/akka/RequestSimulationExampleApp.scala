@@ -5,26 +5,31 @@ import com.boldradius.sdf.akka.RequestProducer._
 import scala.io.StdIn
 import scala.concurrent.duration._
 
-object RequestSimulationExampleApp extends App {
+object RequestSimulationExampleApp {
+  def main(args: Array[String]): Unit = {
+    val system = ActorSystem("EventProducerExample")
+    val app = new RequestSimulationExampleApp(system)
+    app.run()
+  }
+}
 
-  // First, we create an actor system, a producer and a consumer
-  val system = ActorSystem("EventProducerExample")
+class RequestSimulationExampleApp(system: ActorSystem) {
   val producer = system.actorOf(RequestProducer.props(100), "producerActor")
-
-  // TODO: replace dead letters with your own consumer actor
   val consumer = system.actorOf(Consumer.props, "consumer")
 
-  // Tell the producer to start working and to send messages to the consumer
-  producer ! Start(consumer)
+  def run(): Unit = {
+    // Tell the producer to start working and to send messages to the consumer
+    producer ! Start(consumer)
 
-  // Wait for the user to hit <enter>
-  println("Hit <enter> to stop the simulation")
-  StdIn.readLine()
+    // Wait for the user to hit <enter>
+    println("Hit <enter> to stop the simulation")
+    StdIn.readLine()
 
-  // Tell the producer to stop working
-  producer ! Stop
+    // Tell the producer to stop working
+    producer ! Stop
 
-  // Terminate all actors and wait for graceful shutdown
-  system.shutdown()
-  system.awaitTermination(10 seconds)
+    // Terminate all actors and wait for graceful shutdown
+    system.shutdown()
+    system.awaitTermination(10 seconds)
+  }
 }
