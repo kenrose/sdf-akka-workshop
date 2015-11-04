@@ -36,32 +36,32 @@ class StatsAggregator() extends Actor with ActorLogging {
       sender() ! DataRequest.RequestsPerBrowser.Response(requestsPerBrowser=requestsPerBrowser)
     }
 
-    case DataRequest.RequestsByMinute.Request => {
-      sender() ! DataRequest.RequestsByMinute.Response(requestsByMinute=requestsByMinute)
+    case DataRequest.BusiestMinute.Request => {
+      sender() ! DataRequest.BusiestMinute.Response(requestsByMinute=Map.empty[Int, Int]) // TODO: Implement!
     }
 
-    case DataRequest.RequestsPerPage.Request => {
-      sender() ! DataRequest.RequestsPerPage.Response(requestsPerPage=requestsPerPage)
+    case DataRequest.PageVisitDistribution.Request => {
+      sender() ! DataRequest.PageVisitDistribution.Response(pageVisitDistribution=Map.empty[String, Double]) // TODO: Implement!
     }
 
-    case DataRequest.TimePerUrl.Request => {
-      sender() ! DataRequest.TimePerUrl.Response(timePerUrl=timePerUrl)
+    case DataRequest.AverageVisitTimePerUrl.Request => {
+      sender() ! DataRequest.AverageVisitTimePerUrl.Response(timePerUrl=timePerUrl)
     }
 
-    case DataRequest.LandingsPerPage.Request => {
-      sender() ! DataRequest.LandingsPerPage.Response(landingsPerPage=landingsPerPage)
+    case DataRequest.TopLandingPages.Request => {
+      sender() ! DataRequest.TopLandingPages.Response(landingsPerPage=landingsPerPage)
     }
 
-    case DataRequest.SinksPerPage.Request => {
-      sender() ! DataRequest.SinksPerPage.Response(sinksPerPage=sinksPerPage)
+    case DataRequest.TopSinkPages.Request => {
+      sender() ! DataRequest.TopSinkPages.Response(sinksPerPage=sinksPerPage)
     }
 
-    case DataRequest.UsersPerBrowser.Request => {
-      sender() ! DataRequest.UsersPerBrowser.Response(usersPerBrowser=usersPerBrowser)
+    case DataRequest.TopBrowsers.Request => {
+      sender() ! DataRequest.TopBrowsers.Response(topBrowsers=Map.empty[String, Int]) // TODO: Impl
     }
 
-    case DataRequest.UsersPerReferrer.Request => {
-      sender() ! DataRequest.UsersPerReferrer.Response(usersPerReferrer=usersPerReferrer)
+    case DataRequest.TopReferrers.Request => {
+      sender() ! DataRequest.TopReferrers.Response(topReferrers=Map.empty[String, Int]) // TODO: Impl
     }
   }
 
@@ -127,6 +127,7 @@ object StatsAggregator {
   type RequestsPerBrowser = Map[String, Int]  // [browser, num_requests]
   type RequestsByMinute = Map[Int, Int]  // [minute_starting_from_midnight, num_requests]
   type RequestsPerPage = Map[String, Int]  // [page_name, num_requests]
+  type PageVisitDistribution = Map[String, Double]  // [page_name, num_requests]
   type TimePerUrl = Map[String, Int]  // [url, time_in_seconds]
   type LandingsPerPage = Map[String, Int]  // [page_name, num_landing_requests]
   type SinksPerPage = Map[String, Int]  // [page_num, num_sink_requests]
@@ -142,32 +143,32 @@ object StatsAggregator {
       case class Response(requestsPerBrowser: RequestsPerBrowser)
     }
 
-    case object RequestsByMinute extends DataRequest {
-      case class Response(requestsByMinute: RequestsByMinute)
+    case object BusiestMinute extends DataRequest {
+      case class Response(requestsByMinute: RequestsByMinute) // This map will have one entity
     }
 
-    case object RequestsPerPage extends DataRequest {
-      case class Response(requestsPerPage: RequestsPerPage)
+    case object PageVisitDistribution extends DataRequest {
+      case class Response(pageVisitDistribution: PageVisitDistribution)
     }
 
-    case object TimePerUrl extends DataRequest {
+    case object AverageVisitTimePerUrl extends DataRequest {
       case class Response(timePerUrl: TimePerUrl)
     }
 
-    case object LandingsPerPage extends DataRequest {
+    case object TopLandingPages extends DataRequest {
       case class Response(landingsPerPage: LandingsPerPage)
     }
 
-    case object SinksPerPage extends DataRequest {
+    case object TopSinkPages extends DataRequest {
       case class Response(sinksPerPage: SinksPerPage)
     }
 
-    case object UsersPerBrowser extends DataRequest {
-      case class Response(usersPerBrowser: UsersPerBrowser)
+    case object TopBrowsers extends DataRequest {
+      case class Response(topBrowsers: UsersPerBrowser)
     }
 
-    case object UsersPerReferrer extends DataRequest {
-      case class Response(usersPerReferrer: UsersPerReferrer)
+    case object TopReferrers extends DataRequest {
+      case class Response(topReferrers: UsersPerReferrer)
     }
   }
 }
