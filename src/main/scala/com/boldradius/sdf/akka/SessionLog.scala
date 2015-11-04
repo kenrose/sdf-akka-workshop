@@ -20,7 +20,6 @@ class SessionLog(sessionId: Long) extends Actor with ActorLogging {
   }
 }
 
-// WIP, totally changable
 object SessionLog {
   def props(sessionId: Long): Props = Props(new SessionLog(sessionId))
   case class AppendRequest(request: Request)
