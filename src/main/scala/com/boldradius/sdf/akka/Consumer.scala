@@ -11,7 +11,8 @@ class Consumer(args: Args.type) extends PdAkkaActor {
 
   protected def findOrCreateSessionLog(sessionId: Long): ActorRef = {
     context.child(sessionId.toString).getOrElse {
-      createChild(SessionLog.Args(sessionId), Some(sessionId.toString))
+      // TODO: Replace the use of deadLetters here with a Stats actor.
+      createChild(SessionLog.Args(sessionId, context.system.deadLetters), Some(sessionId.toString))
     }
   }
 }

@@ -1,13 +1,17 @@
 package com.boldradius.sdf.akka
 
 import scala.collection.mutable.MutableList
+import scala.concurrent.duration.Duration
 import akka.actor._
 
 import SessionLog._
-class SessionLog(args: Args) extends PdAkkaActor {
+class SessionLog(args: Args) extends PdAkkaActor with SettingsExtension {
   log.info(s"SessionLog ${self} created for sessionId ${args.sessionId}")
 
   val requests = MutableList[Request]()
+
+  private val sessionTimeout = settings.REQUEST_SIMULATOR_SESSION_TIMEOUT
+  context.setReceiveTimeout(sessionTimeout)
 
   override def receive: Receive = {
     case AppendRequest(request) => {
@@ -15,11 +19,15 @@ class SessionLog(args: Args) extends PdAkkaActor {
       requests += request
     }
 
-    case msg => log.info(s"$self received message $msg")
+    case ReceiveTimeout => {
+      args.statsActor ! "TODO REPLACE ME WITH RESULTS"
+      context.setReceiveTimeout(Duration.Undefined)
+      context.stop(self)
+    }
   }
 }
 
 object SessionLog {
-  case class Args(sessionId: Long) extends PdAkkaActor.Args(classOf[SessionLog])
+  case class Args(sessionId: Long, statsActor: ActorRef) extends PdAkkaActor.Args(classOf[SessionLog])
   case class AppendRequest(request: Request)
 }
