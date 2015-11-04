@@ -20,95 +20,42 @@ class StatsAggregator() extends Actor with ActorLogging {
   private def handleSessionData: Receive = {
     case SessionData(requests) => {
       log.info(s"Aggregating session data for ${requests.size} requests.")
-      requestsPerBrowser = mergeMaps(requestsPerBrowser, computeRequestsPerBrowser(requests))
-      requestsByMinute = mergeMaps(requestsByMinute, computeRequestsByMinute(requests))
-      requestsPerPage = mergeMaps(requestsPerPage, computeRequestsPerPage(requests))
-      timePerUrl = mergeMaps(timePerUrl, computeTimePerUrl(requests))
-      landingsPerPage = top(3, mergeMaps(landingsPerPage, computeLandingsPerPage(requests)))
-      sinksPerPage = top(3, mergeMaps(sinksPerPage, computeSinksPerPage(requests)))
-      usersPerBrowser = top(2, mergeMaps(usersPerBrowser, computeUsersPerBrowser(requests)))
-      usersPerReferrer = top(2, mergeMaps(usersPerReferrer, computeUsersPerReferrer(requests)))
+      requestsPerBrowser = mergeMaps(requestsPerBrowser, DataRequest.RequestsPerBrowser.compute(requests))
+      requestsByMinute = mergeMaps(requestsByMinute, DataRequest.BusiestMinute.compute(requests))
+      requestsPerPage = mergeMaps(requestsPerPage, DataRequest.PageVisitDistribution.compute(requests))
+      timePerUrl = mergeMaps(timePerUrl, DataRequest.AverageVisitTimePerUrl.compute(requests))
+      landingsPerPage = mergeMaps(landingsPerPage, DataRequest.TopLandingPages.compute(requests))
+      sinksPerPage = mergeMaps(sinksPerPage, DataRequest.TopSinkPages.compute(requests))
+      usersPerBrowser = mergeMaps(usersPerBrowser, DataRequest.TopBrowsers.compute(requests))
+      usersPerReferrer = mergeMaps(usersPerReferrer, DataRequest.TopReferrers.compute(requests))
     }
   }
 
   private def fetchData: Receive = {
-    case DataRequest.RequestsPerBrowser.Request => {
-      sender() ! DataRequest.RequestsPerBrowser.Response(requestsPerBrowser=requestsPerBrowser)
-    }
+    case DataRequest.RequestsPerBrowser.Request =>
+      sender() ! DataRequest.RequestsPerBrowser.respond(requestsPerBrowser)
 
-    case DataRequest.BusiestMinute.Request => {
-      sender() ! DataRequest.BusiestMinute.Response(requestsByMinute=Map.empty[Int, Int]) // TODO: Implement!
-    }
+    case DataRequest.BusiestMinute.Request =>
+      sender() ! DataRequest.BusiestMinute.respond(requestsByMinute)
 
-    case DataRequest.PageVisitDistribution.Request => {
-      sender() ! DataRequest.PageVisitDistribution.Response(pageVisitDistribution=Map.empty[String, Double]) // TODO: Implement!
-    }
+    case DataRequest.PageVisitDistribution.Request =>
+      sender() ! DataRequest.PageVisitDistribution.respond(requestsPerPage)
 
-    case DataRequest.AverageVisitTimePerUrl.Request => {
-      sender() ! DataRequest.AverageVisitTimePerUrl.Response(timePerUrl=timePerUrl)
-    }
+    case DataRequest.AverageVisitTimePerUrl.Request =>
+      sender() ! DataRequest.AverageVisitTimePerUrl.respond(timePerUrl)
 
-    case DataRequest.TopLandingPages.Request => {
-      sender() ! DataRequest.TopLandingPages.Response(landingsPerPage=landingsPerPage)
-    }
+    case DataRequest.TopLandingPages.Request =>
+      sender() ! DataRequest.TopLandingPages.Response(landingsPerPage)
 
-    case DataRequest.TopSinkPages.Request => {
-      sender() ! DataRequest.TopSinkPages.Response(sinksPerPage=sinksPerPage)
-    }
+    case DataRequest.TopSinkPages.Request =>
+      sender() ! DataRequest.TopSinkPages.Response(sinksPerPage)
 
-    case DataRequest.TopBrowsers.Request => {
-      sender() ! DataRequest.TopBrowsers.Response(topBrowsers=Map.empty[String, Int]) // TODO: Impl
-    }
+    case DataRequest.TopBrowsers.Request =>
+      sender() ! DataRequest.TopBrowsers.Response(usersPerBrowser)
 
-    case DataRequest.TopReferrers.Request => {
-      sender() ! DataRequest.TopReferrers.Response(topReferrers=Map.empty[String, Int]) // TODO: Impl
-    }
+    case DataRequest.TopReferrers.Request =>
+      sender() ! DataRequest.TopReferrers.Response(usersPerReferrer)
   }
-
-  private def computeRequestsPerBrowser(requests: Seq[Request]): Map[String, Int] =
-    requests.groupBy(_.browser).mapValues(_.length)
-
-  private def computeRequestsByMinute(requests: Seq[Request]): Map[Int, Int] =
-    requests.groupBy { request =>
-      val date = new java.util.Date(request.timestamp * 1000)
-      (date.getHours * 60) + date.getMinutes
-    }.mapValues(_.length)
-
-  private def computeRequestsPerPage(requests: Seq[Request]): Map[String, Int] =
-    requests.groupBy(_.url).mapValues(_.length)
-
-  private def computeTimePerUrl(requests: Seq[Request]): Map[String, Int] =
-    // NOTE: The last request is ignored, as we don't know how long the user is on that last page for.
-    requests.zip(requests.tail).map {
-      case (sourcePage, sinkPage) => (sourcePage.url, sinkPage.timestamp - sourcePage.timestamp)
-    }.groupBy(_._1).mapValues(_.map(_._2).sum.toInt)
-
-  private def computeLandingsPerPage(requests: Seq[Request]): Map[String, Int] =
-    requests.headOption match {
-      case Some(request) => Map(request.url -> 1)
-      case None => Map()
-    }
-
-  private def computeSinksPerPage(requests: Seq[Request]): Map[String, Int] =
-    requests.lastOption match {
-      case Some(request) => Map(request.url -> 1)
-      case None => Map()
-    }
-
-  private def computeUsersPerBrowser(requests: Seq[Request]): Map[String, Int] =
-    requests.headOption match {
-      case Some(request) => Map(request.browser -> 1)
-      case None => Map()
-    }
-
-  private def computeUsersPerReferrer(requests: Seq[Request]): Map[String, Int] =
-    requests.headOption match {
-      case Some(request) => Map(request.referrer -> 1)
-      case None => Map()
-    }
-
-  private def top[T](count: Int, map: Map[T, Int]): Map[T, Int] =
-    map.toList.sortBy(_._2).reverse.take(count).toMap
 
   private def mergeMaps[T](a: Map[T, Int], b: Map[T, Int]): Map[T, Int] =
     a ++ b.map { case (browser, count) =>
@@ -134,41 +81,82 @@ object StatsAggregator {
   type UsersPerBrowser = Map[String, Int]  // [browser, num_users]
   type UsersPerReferrer = Map[String, Int]  // [referrer, num_users]
 
-  sealed trait DataRequest {
+  sealed abstract class DataRequest[ComputeType <: Map[_, _], ResponseType] {
     case object Request
+    def compute(requests: Seq[Request]): ComputeType
+    def respond(data: ComputeType): Response
+
+    case class Response(response: ResponseType)
+
+    protected def top[T](count: Int, map: Map[T, Int]): Map[T, Int] =
+      map.toList.sortBy(_._2).reverse.take(count).toMap
   }
 
   case object DataRequest {
-    case object RequestsPerBrowser extends DataRequest {
-      case class Response(requestsPerBrowser: RequestsPerBrowser)
+    case object RequestsPerBrowser extends DataRequest[RequestsPerBrowser, RequestsPerBrowser] {
+      def compute(requests: Seq[Request]) =
+        requests.groupBy(_.browser).mapValues(_.length)
+
+      def respond(data: RequestsPerBrowser) = Response(data)
     }
 
-    case object BusiestMinute extends DataRequest {
-      case class Response(requestsByMinute: RequestsByMinute) // This map will have one entity
+    case object BusiestMinute extends DataRequest[RequestsByMinute, RequestsByMinute] {
+      def compute(requests: Seq[Request]) =
+        requests.groupBy { request =>
+          val date = new java.util.Date(request.timestamp * 1000)
+          (date.getHours * 60) + date.getMinutes
+        }.mapValues(_.length)
+
+      def respond(data: RequestsByMinute) = Response(data)
     }
 
-    case object PageVisitDistribution extends DataRequest {
-      case class Response(pageVisitDistribution: PageVisitDistribution)
+    case object PageVisitDistribution extends DataRequest[RequestsPerPage, PageVisitDistribution] {
+      def compute(requests: Seq[Request]) =
+        requests.groupBy(_.url).mapValues(_.length)
+      def respond(data: RequestsPerPage) = {
+        val sum = data.values.sum.toDouble
+        Response(data.map {
+          case (key, value) => (key, value / sum)
+        })
+      }
     }
 
-    case object AverageVisitTimePerUrl extends DataRequest {
-      case class Response(timePerUrl: TimePerUrl)
+    case object AverageVisitTimePerUrl extends DataRequest[TimePerUrl, TimePerUrl] {
+      def compute(requests: Seq[Request]) =
+      // NOTE: The last request is ignored, as we don't know how long the user is on that last page for.
+        requests.zip(requests.tail).map {
+          case (sourcePage, sinkPage) => (sourcePage.url, sinkPage.timestamp - sourcePage.timestamp)
+        }.groupBy(_._1).mapValues(_.map(_._2).sum.toInt)
+
+      def respond(data: TimePerUrl) = Response(data)
     }
 
-    case object TopLandingPages extends DataRequest {
-      case class Response(landingsPerPage: LandingsPerPage)
+    case object TopLandingPages extends DataRequest[LandingsPerPage, LandingsPerPage] {
+      def compute(requests: Seq[Request]) =
+        Map(requests.head.url -> 1)
+
+      def respond(data: LandingsPerPage) = Response(top(3, data))
     }
 
-    case object TopSinkPages extends DataRequest {
-      case class Response(sinksPerPage: SinksPerPage)
+    case object TopSinkPages extends DataRequest[SinksPerPage, SinksPerPage] {
+      def compute(requests: Seq[Request]) =
+        Map(requests.last.url -> 1)
+
+      def respond(data: SinksPerPage) = Response(top(3, data))
     }
 
-    case object TopBrowsers extends DataRequest {
-      case class Response(topBrowsers: UsersPerBrowser)
+    case object TopBrowsers extends DataRequest[UsersPerBrowser, UsersPerBrowser] {
+      def compute(requests: Seq[Request]) =
+        Map(requests.head.browser -> 1)
+
+      def respond(data: UsersPerBrowser) = Response(top(2, data))
     }
 
-    case object TopReferrers extends DataRequest {
-      case class Response(topReferrers: UsersPerReferrer)
+    case object TopReferrers extends DataRequest[UsersPerReferrer, UsersPerReferrer] {
+      def compute(requests: Seq[Request]) =
+        requests.groupBy(_.referrer).mapValues(_.length)
+
+      def respond(data: UsersPerReferrer) = Response(top(2, data))
     }
   }
 }
