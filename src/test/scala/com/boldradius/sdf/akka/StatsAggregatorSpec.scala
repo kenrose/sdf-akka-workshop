@@ -57,30 +57,29 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
     "set busiest minute correctly" in {
       val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
 
-      val minute1 = 1
-      val timestamp1 = 1 // fix
-      val minute2 = 100
-      val timestamp2 = 2 // fix
-      val minute3 = 1000
-      val timestamp3 = 3 // fix
+      val startOfDay = new java.util.Date()
+      startOfDay.setHours(0)
+      startOfDay.setMinutes(0)
+      startOfDay.setSeconds(0)
+      val startTimestamp = startOfDay.getTime / 1000
 
       val requests = MutableList[Request]()
-      requests += BaseRequest.copy(timestamp = timestamp1)
-      requests += BaseRequest.copy(timestamp = timestamp2)
-      requests += BaseRequest.copy(timestamp = timestamp3)
+      requests += BaseRequest.copy(timestamp = startTimestamp)
+      requests += BaseRequest.copy(timestamp = startTimestamp + 120)
+      requests += BaseRequest.copy(timestamp = startTimestamp + 120)
+      println(requests)
       statsAggregator ! SessionData(requests)
 
       val resp = Await.result(statsAggregator.ask(DataRequest.BusiestMinute.Request).mapTo[DataRequest.BusiestMinute.Response], 1 second)
-      resp.response shouldBe Map(timestamp3 -> minute3)
+      resp.response shouldBe Map(2 -> 2)
 
       requests.clear()
       val BaseRequest2 = BaseRequest.copy(sessionId = 2)
-      requests += BaseRequest2.copy(timestamp = timestamp1)
-      requests += BaseRequest2.copy(timestamp = timestamp2)
+      requests += BaseRequest2.copy(timestamp = startTimestamp)
       statsAggregator ! SessionData(requests)
 
       val resp2 = Await.result(statsAggregator.ask(DataRequest.BusiestMinute.Request).mapTo[DataRequest.BusiestMinute.Response], 1 second)
-      resp2.response shouldBe Map(timestamp2 -> minute2)
+      resp2.response shouldBe Map(0 -> 2)
     }
 
     "set page visit distribution correctly" in {
