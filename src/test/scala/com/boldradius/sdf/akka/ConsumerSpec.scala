@@ -5,40 +5,46 @@ import akka.testkit._
 import com.boldradius.sdf.akka.SessionLog.AppendRequest
 
 class ConsumerSpec extends BaseAkkaSpec {
-  "1. Sending any message to Consumer" should {
-    "a. result in logging the message" in {
-      val consumer = system.actorOf(Consumer.props, "consumer-1a")
+  "Sending any message to Consumer" should {
+    "result in logging the message" in {
+      val consumer = system.actorOf(Consumer.props, "consumer")
       EventFilter.info(pattern = ".*", occurrences = 1) intercept {
         consumer ! "Hello"
       }
+
+      system.stop(consumer)
     }
   }
 
-  "2. Sending a Request to Consumer" should {
+  "Sending a Request to Consumer" should {
 
-    "a. result in creating a SessionLog" in {
+    "result in creating a SessionLog" in {
       val sessionId = 1
       val request = Request(sessionId /* sessionId */, 0 /* timestamp */, "url", "referrer", "browser")
-      val consumer = system.actorOf(Consumer.props, "consumer-2a")
+      val consumer = system.actorOf(Consumer.props, "consumer")
 
       consumer ! request
-      TestProbe().expectActor(s"/user/consumer-2a/${sessionId}")
+      TestProbe().expectActor(s"/user/consumer/${sessionId}")
+
+      system.stop(consumer)
     }
 
-    "b. result in sending an AppendRequest to the SessionLog" in {
+    "result in sending an AppendRequest to the SessionLog" in {
       val sessionLog = TestProbe()
-      val consumer = actor("consumer-2b")(new Consumer {
+      val consumer = actor("consumer")(new Consumer {
         override def createSessionLog(sessionId: Long) = sessionLog.ref
       })
       val request = Request(1 /* sessionId */, 0 /* timestamp */, "url", "referrer", "browser")
 
       consumer ! request
       sessionLog.expectMsg(AppendRequest(request))
+
+      system.stop(consumer)
     }
 
-    "c. result in sending two AppendRequests to the SessionLog when two Requests are received with the same session id" in {
+    "result in sending two AppendRequests to the SessionLog when two Requests are received with the same session id" in {
       val sessionLog = TestProbe()
-      val consumer = actor("consumer-2c")(new Consumer {
+      val consumer = actor("consumer")(new Consumer {
         override def createSessionLog(sessionId: Long) = sessionLog.ref
       })
       val request = Request(1 /* sessionId */, 0 /* timestamp */, "url", "referrer", "browser")
@@ -47,16 +53,18 @@ class ConsumerSpec extends BaseAkkaSpec {
       consumer ! request
       sessionLog.expectMsg(AppendRequest(request))
       sessionLog.expectMsg(AppendRequest(request))
+
+      system.stop(consumer)
     }
 
-    "d. result in creating two SessionLogs when two Requests are received wth different session ids" in {
+    "result in creating two SessionLogs when two Requests are received wth different session ids" in {
       val sessionLog1 = TestProbe()
       val sessionLog2 = TestProbe()
       val unusedSessionLog = TestProbe()
       val sessionId1 = 1
       val sessionId2 = 2
 
-      val consumer = actor("consumer-2d")(new Consumer {
+      val consumer = actor("consumer")(new Consumer {
         override def createSessionLog(sessionId: Long) = {
           println(s"createSessionLog called with $sessionId")
           if (sessionId == sessionId1) sessionLog1.ref
@@ -71,6 +79,8 @@ class ConsumerSpec extends BaseAkkaSpec {
       consumer ! request2
       sessionLog1.expectMsg(AppendRequest(request1))
       sessionLog2.expectMsg(AppendRequest(request2))
+
+      system.stop(consumer)
     }
 
   }
