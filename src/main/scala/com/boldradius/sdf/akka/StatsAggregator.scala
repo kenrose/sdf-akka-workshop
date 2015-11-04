@@ -1,11 +1,9 @@
 package com.boldradius.sdf.akka
 
 import akka.actor._
-import sun.reflect.generics.reflectiveObjects.NotImplementedException
-import scala.concurrent.duration._
 
-class StatsAggregator() extends Actor with ActorLogging {
-  import StatsAggregator._
+import StatsAggregator._
+class StatsAggregator(args: Args.type) extends PdAkkaActor {
 
   var requestsPerBrowser: RequestsPerBrowser = Map.empty[String, Int]
   var requestsByMinute: RequestsByMinute = Map.empty[Int, Int]
@@ -68,7 +66,7 @@ class StatsAggregator() extends Actor with ActorLogging {
 }
 
 object StatsAggregator {
-  def props: Props = Props(new StatsAggregator())
+  case object Args extends PdAkkaActor.Args(classOf[StatsAggregator])
 
   case class SessionData(requests: Seq[Request])
 

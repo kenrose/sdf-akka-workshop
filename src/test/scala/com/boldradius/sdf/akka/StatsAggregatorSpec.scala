@@ -15,7 +15,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
 
   "Sending an empty SessionData to StatsAggregator" should {
     "not change anything" in {
-      val statsAggregator = system.actorOf(StatsAggregator.props)
+      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
       statsAggregator ! SessionData(Seq.empty)
     }
   }
@@ -23,7 +23,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
   "Sending SessionData to StatsAggregator" should {
 
     "set requests per browser correctly" in {
-      val statsAggregator = system.actorOf(StatsAggregator.props)
+      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
 
       val browser1 = "b1"
       val browser2 = "b2"
@@ -55,7 +55,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
     }
 
     "set busiest minute correctly" in {
-      val statsAggregator = system.actorOf(StatsAggregator.props)
+      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
 
       val minute1 = 1
       val timestamp1 = 1 // fix
@@ -84,7 +84,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
     }
 
     "set page visit distribution correctly" in {
-      val statsAggregator = system.actorOf(StatsAggregator.props)
+      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
 
       val page1 = "p1"
       val page2 = "p2"
@@ -116,7 +116,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
     }
 
     "set average visit time per page correctly" in {
-      val statsAggregator = system.actorOf(StatsAggregator.props)
+      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
 
       val page1 = "p1"
       val page2 = "p2"
@@ -150,7 +150,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
     }
 
     "set top 3 landing pages correctly" in {
-      val statsAggregator = system.actorOf(StatsAggregator.props)
+      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
 
       val page1 = "p1"
       val page2 = "p2"
