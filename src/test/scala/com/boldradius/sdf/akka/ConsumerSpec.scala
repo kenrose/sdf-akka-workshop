@@ -5,23 +5,15 @@ import akka.actor.ActorDSL._
 import akka.testkit._
 import com.boldradius.sdf.akka.SessionLog.AppendRequest
 
-import scala.collection.mutable
-
 class ConsumerSpec extends BaseAkkaSpec {
 
   "Sending a Request to Consumer" should {
 
-    class TestConsumer(sessionLogs: Map[Long, TestProbe]) extends Consumer(Consumer.Args) {
-      val createdSessions = mutable.Set.empty[Long]
-      override def createChild(actorArgs: PdAkkaActor.Args, actorName: Option[String]) = actorArgs match {
-        // TODO: Replace the use of _ here with a Stats actor?
-        case SessionLog.Args(sessionId, _) if sessionLogs.contains(sessionId) =>
-          if (createdSessions.contains(sessionId)) {
-            throw InvalidActorNameException(s"Tried to create the session twice: $sessionId")
-          }
-          createdSessions.add(sessionId)
-          assert(actorName.contains(sessionId.toString))
-          context.actorOf(sessionLogs(sessionId).asProps, actorName.get)
+    class TestConsumer(sessionLogs: Map[Long, TestProbe]) extends Consumer(Consumer.Args) with TestPdAkkaActor {
+      override def createTestChild(actorArgs: PdAkkaActor.Args, actorName: Option[String]) = actorArgs match {
+        case args: SessionLog.Args if sessionLogs.contains(args.sessionId) =>
+          assert(actorName.contains(args.sessionId.toString))
+          sessionLogs(args.sessionId)
       }
     }
     def makeTestConsumer(sessionLogs: (Long, TestProbe)*) = new TestConsumer(sessionLogs.toMap)
