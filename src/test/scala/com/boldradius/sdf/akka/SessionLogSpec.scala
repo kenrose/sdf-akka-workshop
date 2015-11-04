@@ -1,5 +1,6 @@
 package com.boldradius.sdf.akka
 
+import akka.actor._
 import akka.testkit._
 import scala.concurrent.duration._
 
@@ -7,7 +8,7 @@ class SessionLogSpec extends BaseAkkaSpec {
   "Sending a non-handled message to SessionLog" should {
     "not reset the receiveTimeout" in {
       val statsProbe = TestProbe()
-      val sessionLog = system.actorOf(SessionLog.props(0, statsProbe.ref), "session-log")
+      val sessionLog = PdAkkaActor.createActor(system, SessionLog.Args(0, statsProbe.ref), Some("session-log"))
       val sessionTimeout = Settings(system).REQUEST_SIMULATOR_SESSION_TIMEOUT
 
       // Send an unhandled message...
@@ -25,7 +26,7 @@ class SessionLogSpec extends BaseAkkaSpec {
 
     "send a message to the stats actor after the timeout" in {
       val statsProbe = TestProbe()
-      val sessionLog = system.actorOf(SessionLog.props(0, statsProbe.ref), "session-log")
+      val sessionLog = PdAkkaActor.createActor(system, SessionLog.Args(0, statsProbe.ref), Some("session-log"))
       val sessionTimeout = Settings(system).REQUEST_SIMULATOR_SESSION_TIMEOUT
 
       // Then expect that we receive a Timeout around the time of the original timeout.

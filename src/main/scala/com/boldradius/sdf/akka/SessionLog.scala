@@ -4,23 +4,23 @@ import scala.collection.mutable.MutableList
 import scala.concurrent.duration.Duration
 import akka.actor._
 
-class SessionLog(sessionId: Long, statsActor: ActorRef) extends Actor with ActorLogging with SettingsExtension {
-  log.info(s"SessionLog ${self} created for sessionId ${sessionId}")
+import SessionLog._
+class SessionLog(args: Args) extends PdAkkaActor with SettingsExtension {
+  log.info(s"SessionLog ${self} created for sessionId ${args.sessionId}")
 
   val requests = MutableList[Request]()
 
-  import SessionLog._
   private val sessionTimeout = settings.REQUEST_SIMULATOR_SESSION_TIMEOUT
   context.setReceiveTimeout(sessionTimeout)
 
   override def receive: Receive = {
     case AppendRequest(request) => {
-      log.info(s"Appending request with URL ${request.url} to session ${sessionId}")
+      log.info(s"Appending request with URL ${request.url} to session ${args.sessionId}")
       requests += request
     }
 
     case ReceiveTimeout => {
-      statsActor ! StatsAggregator.SessionData(requests)
+      args.statsActor ! StatsAggregator.SessionData(requests)
       context.setReceiveTimeout(Duration.Undefined)
       context.stop(self)
     }
@@ -28,8 +28,6 @@ class SessionLog(sessionId: Long, statsActor: ActorRef) extends Actor with Actor
 }
 
 object SessionLog {
-  def props(sessionId: Long, statsActor: ActorRef): Props =
-    Props(new SessionLog(sessionId, statsActor))
-
+  case class Args(sessionId: Long, statsActor: ActorRef) extends PdAkkaActor.Args(classOf[SessionLog])
   case class AppendRequest(request: Request)
 }
