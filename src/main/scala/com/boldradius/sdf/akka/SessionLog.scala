@@ -19,9 +19,7 @@ class SessionLog(args: Args) extends PdAkkaActor {
   }
 }
 
-// WIP, totally changable
 object SessionLog {
   case class Args(sessionId: Long) extends PdAkkaActor.Args(classOf[SessionLog])
   case class AppendRequest(request: Request)
-  case class RequestAppended(request: Request)
 }
