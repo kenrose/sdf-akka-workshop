@@ -5,9 +5,25 @@ import akka.actor._
 class StatsAggregator() extends Actor with ActorLogging {
   import StatsAggregator._
 
+  var requestsPerBrowser = Map.empty[String, Int]
+
   override def receive: Receive = {
-    case x => log.info(s"StatsAggregator got: $x")
+    case SessionData(requests) => {
+      log.info(s"Aggregating session data for ${requests.size} requests.")
+      requestsPerBrowser = mergeMaps(requestsPerBrowser, computeRequestsPerBrowser(requests))
+    }
   }
+
+  private def computeRequestsPerBrowser(requests: Seq[Request]): Map[String, Int] =
+    requests.groupBy(_.browser).mapValues(_.length)
+
+  private def mergeMaps[T](a: Map[T, Int], b: Map[T, Int]): Map[T, Int] =
+    a ++ b.map { case (browser, count) =>
+      a.get(browser) match {
+        case Some(v) => browser -> (count + v)
+        case None => browser -> count
+      }
+    }
 }
 
 object StatsAggregator {
