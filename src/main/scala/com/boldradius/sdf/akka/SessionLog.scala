@@ -3,16 +3,16 @@ package com.boldradius.sdf.akka
 import scala.collection.mutable.MutableList
 import akka.actor._
 
-class SessionLog(sessionId: Long) extends Actor with ActorLogging {
-  log.info(s"SessionLog ${self} created for sessionId ${sessionId}")
+import SessionLog._
+
+class SessionLog(d: Def) extends PdAkkaActor {
+  log.info(s"SessionLog ${self} created for sessionId ${d.sessionId}")
 
   val requests = MutableList[Request]()
 
-  import SessionLog._
-
   override def receive: Receive = {
     case AppendRequest(request) => {
-      log.info(s"Appending request with URL ${request.url} to session ${sessionId}")
+      log.info(s"Appending request with URL ${request.url} to session ${d.sessionId}")
       requests += request
     }
 
@@ -22,7 +22,7 @@ class SessionLog(sessionId: Long) extends Actor with ActorLogging {
 
 // WIP, totally changable
 object SessionLog {
-  def props(sessionId: Long): Props = Props(new SessionLog(sessionId))
+  case class Def(sessionId: Long) extends PdAkkaActor.DefWithParams(classOf[SessionLog])
   case class AppendRequest(request: Request)
   case class RequestAppended(request: Request)
 }
