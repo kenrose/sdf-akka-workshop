@@ -13,11 +13,5 @@ object ProducerApp {
 }
 
 class ProducerApp(system: ActorSystem) {
-  val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, Some("statsAggregator"))
-  val producer = system.actorOf(RequestProducer.props(100), "producerActor")
-  val consumer = PdAkkaActor.createActor(system, Consumer.Args(statsAggregator), Some("consumer"))
-
-  def run(): Unit = {
-    producer ! Start(consumer)
-  }
+  val producer = system.actorOf(RequestProducer.props(100))
 }
