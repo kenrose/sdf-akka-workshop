@@ -3,34 +3,9 @@ package com.boldradius.sdf.akka
 import akka.actor._
 
 import StatsAggregator._
-import akka.persistence.{SnapshotOffer, PersistentActor}
+import akka.persistence.{SaveSnapshotFailure, SaveSnapshotSuccess, SnapshotOffer, PersistentActor}
 
 class StatsAggregator(args: Args.type) extends PdAkkaActor with PersistentActor {
-
-  case class State(requestsPerBrowser: RequestsPerBrowser = Map.empty[String, Int],
-                   requestsByMinute: RequestsByMinute = Map.empty[Int, Int],
-                   requestsPerPage: RequestsPerPage = Map.empty[String, Int],
-                   timePerUrl: TimePerUrl = Map.empty[String, Int],
-                   nonFinalRequestsPerUrl: NonFinalRequestsPerUrl = Map.empty[String, Int],
-                   landingsPerPage: LandingsPerPage = Map.empty[String, Int],
-                   sinksPerPage: SinksPerPage = Map.empty[String, Int],
-                   usersPerBrowser: UsersPerBrowser = Map.empty[String, Int],
-                   usersPerReferrer: UsersPerReferrer = Map.empty[String, Int]) {
-    def updated(requests: Seq[Request]): State = {
-      copy(
-        requestsPerBrowser = mergeMaps(requestsPerBrowser, DataRequest.RequestsPerBrowser.compute(requests)),
-        requestsByMinute = mergeMaps(requestsByMinute, DataRequest.BusiestMinute.compute(requests)),
-        requestsPerPage = mergeMaps(requestsPerPage, DataRequest.PageVisitDistribution.compute(requests)),
-        timePerUrl = mergeMaps(timePerUrl, DataRequest.AverageVisitTimePerUrl.compute(requests)),
-        nonFinalRequestsPerUrl = mergeMaps(nonFinalRequestsPerUrl, DataRequest.NonFinalRequestsPerUrl.compute(requests)),
-        landingsPerPage = mergeMaps(landingsPerPage, DataRequest.TopLandingPages.compute(requests)),
-        sinksPerPage = mergeMaps(sinksPerPage, DataRequest.TopSinkPages.compute(requests)),
-        usersPerBrowser = mergeMaps(usersPerBrowser, DataRequest.TopBrowsers.compute(requests)),
-        usersPerReferrer = mergeMaps(usersPerReferrer, DataRequest.TopReferrers.compute(requests))
-      )
-    }
-  }
-
   var state = State()
 
   private def fetchData: Receive = {
@@ -58,14 +33,6 @@ class StatsAggregator(args: Args.type) extends PdAkkaActor with PersistentActor 
     case DataRequest.TopReferrers.Request =>
       sender() ! DataRequest.TopReferrers.respond(state.usersPerReferrer)
   }
-
-  private def mergeMaps[T](a: Map[T, Int], b: Map[T, Int]): Map[T, Int] = {
-    a ++ b.map { case (browser, count) =>
-      val v = a.get(browser).getOrElse(0)
-      browser -> (count + v)
-    }
-  }
-
   def updateState(requests: Seq[Request]): Unit =
     state = state.updated(requests)
 
@@ -81,7 +48,6 @@ class StatsAggregator(args: Args.type) extends PdAkkaActor with PersistentActor 
       log.info(s"Aggregating session data for ${requests.size} requests.")
       updateState(requests)
 
-      
       saveSnapshot(state)
     }
   }
@@ -105,6 +71,38 @@ object StatsAggregator {
   type SinksPerPage = Map[String, Int]  // [page_num, num_sink_requests]
   type UsersPerBrowser = Map[String, Int]  // [browser, num_users]
   type UsersPerReferrer = Map[String, Int]  // [referrer, num_users]
+
+  @SerialVersionUID(100L)
+  case class State(requestsPerBrowser: RequestsPerBrowser = Map.empty[String, Int],
+                   requestsByMinute: RequestsByMinute = Map.empty[Int, Int],
+                   requestsPerPage: RequestsPerPage = Map.empty[String, Int],
+                   timePerUrl: TimePerUrl = Map.empty[String, Int],
+                   nonFinalRequestsPerUrl: NonFinalRequestsPerUrl = Map.empty[String, Int],
+                   landingsPerPage: LandingsPerPage = Map.empty[String, Int],
+                   sinksPerPage: SinksPerPage = Map.empty[String, Int],
+                   usersPerBrowser: UsersPerBrowser = Map.empty[String, Int],
+                   usersPerReferrer: UsersPerReferrer = Map.empty[String, Int]) extends Serializable {
+    def updated(requests: Seq[Request]): State = {
+      copy(
+        requestsPerBrowser = mergeMaps(requestsPerBrowser, DataRequest.RequestsPerBrowser.compute(requests)),
+        requestsByMinute = mergeMaps(requestsByMinute, DataRequest.BusiestMinute.compute(requests)),
+        requestsPerPage = mergeMaps(requestsPerPage, DataRequest.PageVisitDistribution.compute(requests)),
+        timePerUrl = mergeMaps(timePerUrl, DataRequest.AverageVisitTimePerUrl.compute(requests)),
+        nonFinalRequestsPerUrl = mergeMaps(nonFinalRequestsPerUrl, DataRequest.NonFinalRequestsPerUrl.compute(requests)),
+        landingsPerPage = mergeMaps(landingsPerPage, DataRequest.TopLandingPages.compute(requests)),
+        sinksPerPage = mergeMaps(sinksPerPage, DataRequest.TopSinkPages.compute(requests)),
+        usersPerBrowser = mergeMaps(usersPerBrowser, DataRequest.TopBrowsers.compute(requests)),
+        usersPerReferrer = mergeMaps(usersPerReferrer, DataRequest.TopReferrers.compute(requests))
+      )
+    }
+  }
+
+  def mergeMaps[T](a: Map[T, Int], b: Map[T, Int]): Map[T, Int] = {
+    a ++ b.map { case (browser, count) =>
+      val v = a.get(browser).getOrElse(0)
+      browser -> (count + v)
+    }
+  }
 
   sealed abstract class DataRequest[ComputeType <: Map[_, _], ResponseType] {
     case object Request

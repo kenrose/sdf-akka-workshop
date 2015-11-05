@@ -20,6 +20,13 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
     }
   }
 
+  "an existing StatsAggregator" should {
+    "be serializable" in {
+      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
+      statsAggregator ! SessionData(Seq.empty)
+    }
+  }
+
   "Sending SessionData to StatsAggregator" should {
 
     "set requests per browser correctly" in {
