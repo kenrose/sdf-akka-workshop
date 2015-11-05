@@ -1,33 +1,43 @@
 package com.boldradius.sdf.akka
 
+import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.util.Timeout
 import com.boldradius.sdf.akka.StatsAggregator.{DataRequest, SessionData}
+import com.typesafe.config.ConfigFactory
+import org.scalatest.BeforeAndAfter
 
 import scala.collection.mutable.MutableList
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.reflect.io.File
 
-class StatsAggregatorSpec extends BaseAkkaSpec {
+class StatsAggregatorSpec extends BaseAkkaSpec with BeforeAndAfter with TestFolder {
   implicit val timeout =  1 second: Timeout
+  var customSystem = ActorSystem()
 
   val BaseRequest = Request(1, 0, "url", "referrer", "browser")
 
-  override def beforeAll: Unit = {
-    File(Settings(system).SNAPSHOT_DIR).deleteRecursively()
+  before {
+    val customConfig = ConfigFactory.parseString(s"""akka.persistence.snapshot-store.local.dir = "$testFolder"""")
+    customSystem = ActorSystem("TestSystem", customConfig.withFallback(ConfigFactory.load()))
+  }
+
+  after {
+    customSystem.shutdown()
+    customSystem.awaitTermination()
   }
 
   "Sending an empty SessionData to StatsAggregator" should {
     "not change anything" in {
-      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
+      val statsAggregator = PdAkkaActor.createActor(customSystem, StatsAggregator.Args, None)
       statsAggregator ! SessionData(Seq.empty)
     }
   }
 
   "an existing StatsAggregator" should {
     "be serializable" in {
-      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
+      val statsAggregator = PdAkkaActor.createActor(customSystem, StatsAggregator.Args, None)
       statsAggregator ! SessionData(Seq.empty)
     }
   }
@@ -35,7 +45,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
   "Sending SessionData to StatsAggregator" should {
 
     "set requests per browser correctly" in {
-      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
+      val statsAggregator = PdAkkaActor.createActor(customSystem, StatsAggregator.Args, None)
 
       val browser1 = "b1"
       val browser2 = "b2"
@@ -67,7 +77,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
     }
 
     "set busiest minute correctly" in {
-      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
+      val statsAggregator = PdAkkaActor.createActor(customSystem, StatsAggregator.Args, None)
 
       val startOfDay = new java.util.Date()
       startOfDay.setHours(0)
@@ -95,7 +105,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
     }
 
     "set page visit distribution correctly" in {
-      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
+      val statsAggregator = PdAkkaActor.createActor(customSystem, StatsAggregator.Args, None)
 
       val page1 = "p1"
       val page2 = "p2"
@@ -125,7 +135,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
     }
 
     "set average visit time per page correctly" in {
-      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
+      val statsAggregator = PdAkkaActor.createActor(customSystem, StatsAggregator.Args, None)
 
       val page1 = "p1"
       val page2 = "p2"
@@ -161,7 +171,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
     }
 
     "set top 3 landing pages correctly" in {
-      val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, None)
+      val statsAggregator = PdAkkaActor.createActor(customSystem, StatsAggregator.Args, None)
 
       val page1 = "p1"
       val page2 = "p2"
