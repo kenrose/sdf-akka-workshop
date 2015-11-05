@@ -12,6 +12,9 @@ class Settings(system: ExtendedActorSystem) extends Extension {
   val SUPERVISOR_RESTART_COUNT =
     system.settings.config.getInt("request-simulator.supervisor-restart-count")
 
+  val SUPERVISOR_STARTUP_TIMEOUT =
+    Duration(system.settings.config.getDuration("request-simulator.supervisor-startup-timeout", Seconds), Seconds)
+
   val OPS_TEAM_EMAIL =
     system.settings.config.getString("request-simulator.ops-team-email")
 }

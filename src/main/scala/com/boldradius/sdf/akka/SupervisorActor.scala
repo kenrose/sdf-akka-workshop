@@ -5,15 +5,15 @@ import scala.util.control.NonFatal
 
 import SupervisorActor._
 class SupervisorActor(args: Args) extends PdAkkaActor with SettingsExtension {
-
   private val maxRestarts = settings.SUPERVISOR_RESTART_COUNT
   private val opsTeamEmail = settings.OPS_TEAM_EMAIL
 
   private val subordinate = createChild(args.subordinateArgs, Some(args.subordinateName))
-  private val emailSender = createChild(EmailActor.Args, Some("emailer"))
   private var restartCount = 0
 
-  override def receive: Receive = Actor.emptyBehavior
+  override def receive: Receive = {
+    case GetSubordinate => sender() ! Subordinate(subordinate)
+  }
 
   override val supervisorStrategy: SupervisorStrategy = {
     val decider: SupervisorStrategy.Decider = {
@@ -21,7 +21,7 @@ class SupervisorActor(args: Args) extends PdAkkaActor with SettingsExtension {
         restartCount += 1
         if (restartCount > maxRestarts) {
           val message = s"Failed ${maxRestarts} times. Stopping."
-          emailSender ! EmailActor.SendEmail(opsTeamEmail, message)
+          args.emailSender ! EmailActor.SendEmail(opsTeamEmail, message)
           SupervisorStrategy.Stop
         } else {
           SupervisorStrategy.Restart
@@ -33,6 +33,12 @@ class SupervisorActor(args: Args) extends PdAkkaActor with SettingsExtension {
 }
 
 object SupervisorActor {
-  case class Args(subordinateArgs: PdAkkaActor.Args, subordinateName: String)
+  case class Args(
+      subordinateArgs: PdAkkaActor.Args,
+      subordinateName: String,
+      emailSender: ActorRef)
       extends PdAkkaActor.Args(classOf[SupervisorActor])
+
+  case object GetSubordinate
+  case class Subordinate(subordinate: ActorRef)
 }
