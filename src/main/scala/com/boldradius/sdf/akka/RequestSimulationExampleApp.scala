@@ -20,7 +20,6 @@ class RequestSimulationExampleApp(system: ActorSystem) {
 
   def run(): Unit = {
     // Tell the producer to start working and to send messages to the consumer
-    PdAkkaActor.createActor(system, EmailActor.Args, Some("email")) ! "hello world"
     producer ! Start(consumer)
 
     // Wait for the user to hit <enter>
