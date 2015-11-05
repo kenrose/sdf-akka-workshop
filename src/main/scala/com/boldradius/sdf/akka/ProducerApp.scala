@@ -8,7 +8,7 @@ import scala.concurrent.duration._
 
 object ProducerApp {
   def main(args: Array[String]): Unit = {
-    new ProducerApp(ActorSystem("ClusterSystem", ConfigFactory.load("producer")).run()
+    new ProducerApp(ActorSystem("ClusterSystem", ConfigFactory.load("producer"))).run()
   }
 }
 
