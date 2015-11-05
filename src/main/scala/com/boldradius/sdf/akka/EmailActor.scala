@@ -1,0 +1,14 @@
+package com.boldradius.sdf.akka
+
+import EmailActor._
+
+class EmailActor(args: Args.type) extends PdAkkaActor {
+  override def receive: Receive = {
+    case req: Request => {
+    }
+  }
+}
+
+object EmailActor {
+  case class Args extends PdAkkaActor.Args(classOf[EmailActor])
+}
