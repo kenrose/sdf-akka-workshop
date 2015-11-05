@@ -19,7 +19,7 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
 
   def stopped: Receive = {
     case ConsumerRegistration(consumer) =>
-
+      context.watch(consumer)
       // Move to a different state to avoid sending to more than one target
       context.become(producing)
 
@@ -36,6 +36,9 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
     case Stop =>
       log.debug("Stopping simulation")
       context.become(stopped)
+
+    case Terminated(consumer) =>
+      self ! Stop
   }
 
 
