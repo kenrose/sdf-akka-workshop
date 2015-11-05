@@ -17,30 +17,25 @@ object RequestSimulationExampleApp {
 }
 
 class RequestSimulationExampleApp(system: ActorSystem) {
-  import system.dispatcher
+  val settings = Settings(system)
   val emailSender = PdAkkaActor.createActor(system, EmailActor.Args, Some("emailer"))
-  val supervisorStatusTimeout = Settings(system).SUPERVISOR_STARTUP_TIMEOUT
-  val statsAggregator = createSupervisedActor(StatsAggregator.Args, "statsAggregator")
-
-  val producer = system.actorOf(RequestProducer.props(100), "producerActor")
-
   // creates a supervised actor
   def createSupervisedActor(
       subordinateArgs: PdAkkaActor.Args,
       subordinateName: String): ActorRef = {
-    implicit val timeout: Timeout = supervisorStatusTimeout
-    val supervisorArgs =
-      SupervisorActor.Args(subordinateArgs, subordinateName, emailSender)
-    val supervisor =
-      PdAkkaActor.createActor(system, supervisorArgs, Some(s"supervisor-${subordinateName}"))
-    val subordinate =
-      Await.result(
-        (supervisor ? SupervisorActor.GetSubordinate).mapTo[SupervisorActor.Subordinate],
-        Duration.Inf
-      )
-    subordinate.subordinate
+    val supervisor = PdAkkaActor.createActor(system,
+      Supervisor.Args(subordinateArgs, subordinateName, emailSender),
+      Some(s"supervisor-$subordinateName"))
+
+    implicit val executionContext = system.dispatcher
+    implicit val timeout: Timeout = settings.SUPERVISOR_STARTUP_TIMEOUT
+    val res = (supervisor ? Supervisor.GetSubordinate).mapTo[Supervisor.Subordinate]
+    Await.result(res, Duration.Inf).subordinate
   }
 
+  val producer = system.actorOf(RequestProducer.props(100), "producerActor")
+
+  val statsAggregator = createSupervisedActor(StatsAggregator.Args, "statsAggregator")
   val consumer = PdAkkaActor.createActor(system, Consumer.Args(statsAggregator), Some("consumer"))
 
   def run(): Unit = {

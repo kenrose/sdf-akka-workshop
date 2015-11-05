@@ -3,8 +3,8 @@ package com.boldradius.sdf.akka
 import akka.actor._
 import scala.util.control.NonFatal
 
-import SupervisorActor._
-class SupervisorActor(args: Args) extends PdAkkaActor with SettingsExtension {
+import Supervisor._
+class Supervisor(args: Args) extends PdAkkaActor with SettingsExtension {
   private val maxRestarts = settings.SUPERVISOR_RESTART_COUNT
   private val opsTeamEmail = settings.OPS_TEAM_EMAIL
 
@@ -20,7 +20,7 @@ class SupervisorActor(args: Args) extends PdAkkaActor with SettingsExtension {
       case NonFatal(ex) => {
         restartCount += 1
         if (restartCount > maxRestarts) {
-          val message = s"Failed ${maxRestarts} times. Stopping."
+          val message = s"Subordinate $subordinate failed $restartCount times. Stopping."
           args.emailSender ! EmailActor.SendEmail(opsTeamEmail, message)
           SupervisorStrategy.Stop
         } else {
@@ -32,12 +32,12 @@ class SupervisorActor(args: Args) extends PdAkkaActor with SettingsExtension {
   }
 }
 
-object SupervisorActor {
+object Supervisor {
   case class Args(
       subordinateArgs: PdAkkaActor.Args,
       subordinateName: String,
       emailSender: ActorRef)
-      extends PdAkkaActor.Args(classOf[SupervisorActor])
+      extends PdAkkaActor.Args(classOf[Supervisor])
 
   case object GetSubordinate
   case class Subordinate(subordinate: ActorRef)
