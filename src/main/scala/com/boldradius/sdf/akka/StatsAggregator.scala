@@ -58,13 +58,12 @@ class StatsAggregator(args: Args.type) extends PdAkkaActor {
       sender() ! DataRequest.TopReferrers.respond(usersPerReferrer)
   }
 
-  private def mergeMaps[K](a: Map[K, Int], b: Map[K, Int]): Map[K, Int] =
+  private def mergeMaps[T](a: Map[T, Int], b: Map[T, Int]): Map[T, Int] = {
     a ++ b.map { case (browser, count) =>
-      a.get(browser) match {
-        case Some(v) => browser -> (count + v)
-        case None => browser -> count
-      }
+      val v = a.get(browser).getOrElse(0)
+      browser -> (count + v)
     }
+  }
 }
 
 object StatsAggregator {
