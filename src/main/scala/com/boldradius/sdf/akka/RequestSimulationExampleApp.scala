@@ -25,8 +25,9 @@ class RequestSimulationExampleApp(system: ActorSystem) {
   def createSupervisedActor(
       subordinateArgs: PdAkkaActor.Args,
       subordinateName: String): ActorRef = {
+    val maxRestarts = settings.SUPERVISOR_RESTART_COUNT
     val supervisor = PdAkkaActor.createActor(system,
-      Supervisor.Args(subordinateArgs, subordinateName, emailSender),
+      Supervisor.Args(subordinateArgs, subordinateName, emailSender, maxRestarts),
       Some(s"supervisor-$subordinateName"))
 
     implicit val executionContext = system.dispatcher
