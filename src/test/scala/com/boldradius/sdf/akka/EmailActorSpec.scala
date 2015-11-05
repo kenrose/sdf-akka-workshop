@@ -9,7 +9,7 @@ class EmailActorSpec extends BaseAkkaSpec {
     "write a line to email.log" in {
       val emailActor = PdAkkaActor.createActor(system, EmailActor.Args, Some("email-actor"))
       val message = EmailActor.SendEmail("foo@bar.com", "Failure!")
-      EventFilter.error(source = emailActor.path.toString, pattern = s".*foo.*", occurrences = 1) intercept {
+      EventFilter.error(pattern = s".*foo.*", occurrences = 1) intercept {
         emailActor ! message
       }
       system.stop(emailActor)
