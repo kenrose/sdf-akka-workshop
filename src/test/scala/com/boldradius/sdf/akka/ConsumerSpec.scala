@@ -25,6 +25,7 @@ class ConsumerSpec extends BaseAkkaSpec {
 
       consumer ! request
       TestProbe().expectActor(s"/user/consumer-create-session-log/${sessionId}")
+      system.stop(consumer)
     }
 
     "result in sending an AppendRequest to the SessionLog" in {
