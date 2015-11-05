@@ -18,3 +18,7 @@ project/plugins/project/
 
 # IntelliJ specific
 .idea
+
+# Persistence folders
+journal/
+snapshots/
