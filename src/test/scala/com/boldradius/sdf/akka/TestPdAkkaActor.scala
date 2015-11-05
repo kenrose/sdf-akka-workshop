@@ -19,3 +19,10 @@ trait TestPdAkkaActor extends PdAkkaActor {
   }
   def createTestChild(actorArgs: PdAkkaActor.Args, actorName: Option[String]): TestProbe
 }
+
+class EmptyPdAkkaActor(args: EmptyPdAkkaActor.Args.type) extends PdAkkaActor {
+  override def receive: Receive = Actor.emptyBehavior
+}
+object EmptyPdAkkaActor {
+  case object Args extends PdAkkaActor.Args(classOf[EmptyPdAkkaActor])
+}
