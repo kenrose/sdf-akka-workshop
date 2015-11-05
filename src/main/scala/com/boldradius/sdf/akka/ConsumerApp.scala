@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 
 object ConsumerApp {
   def main(args: Array[String]): Unit = {
-    new ConsumerApp(ActorSystem("ClusterSystem", ConfigFactory.load("consumer"))).run
+    new ConsumerApp(ActorSystem("ClusterSystem", ConfigFactory.load("consumer")))
   }
 }
 
@@ -31,12 +31,6 @@ class ConsumerApp(system: ActorSystem) {
     Await.result(res, Duration.Inf).subordinate
   }
 
-  val producer = system.actorOf(RequestProducer.props(100), "producerActor")
-
   val statsAggregator = createSupervisedActor(StatsAggregator.Args, "statsAggregator")
   val consumer = PdAkkaActor.createActor(system, Consumer.Args(statsAggregator), Some("consumer"))
-
-  def run: Unit = {
-
-  }
 }

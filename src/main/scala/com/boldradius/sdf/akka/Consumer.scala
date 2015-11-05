@@ -21,6 +21,9 @@ class Consumer(args: Args) extends PdAkkaActor {
   override def receive: Receive = {
     case MemberUp(member) =>
       log.info("Member is Up: {}", member.address)
+      if (member.hasRole("producer")) {
+        context.actorSelection(RootActorPath(member.address) / "user" / "producer") ! RequestProducer.ConsumerRegistration(self)
+      }
     case UnreachableMember(member) =>
       log.info("Member detected as unreachable: {}", member)
     case MemberRemoved(member, previousStatus) =>

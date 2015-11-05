@@ -13,5 +13,5 @@ object ProducerApp {
 }
 
 class ProducerApp(system: ActorSystem) {
-  val producer = system.actorOf(RequestProducer.props(100))
+  val producer = system.actorOf(RequestProducer.props(100), "producer")
 }
