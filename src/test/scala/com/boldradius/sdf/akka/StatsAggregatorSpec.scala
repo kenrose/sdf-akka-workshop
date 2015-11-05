@@ -96,11 +96,9 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
       statsAggregator ! SessionData(requests)
 
       val resp = Await.result(statsAggregator.ask(DataRequest.PageVisitDistribution.Request).mapTo[DataRequest.PageVisitDistribution.Response], 1 second)
-      /*
-      resp.pageVisitDistribution.get(page1).get shouldBe (2/3)
-      resp.pageVisitDistribution.get(page2).get shouldBe (1/3)
-      resp.pageVisitDistribution.get(page3) shouldBe None
-      */
+      resp.response.get(page1).get shouldBe (2.0/3.0)
+      resp.response.get(page2).get shouldBe (1.0/3.0)
+      resp.response.get(page3) shouldBe None
 
       requests.clear()
       val BaseRequest2 = BaseRequest.copy(sessionId = 2)
@@ -109,9 +107,9 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
       statsAggregator ! SessionData(requests)
 
       val resp2 = Await.result(statsAggregator.ask(DataRequest.PageVisitDistribution.Request).mapTo[DataRequest.PageVisitDistribution.Response], 1 second)
-      // expect page1 to be 3/5
-      // expect page2 to be 1/5
-      // expect page3 to be 1/5
+      resp2.response.get(page1).get shouldBe (3.0/5.0)
+      resp2.response.get(page2).get shouldBe (1.0/5.0)
+      resp2.response.get(page3).get shouldBe (1.0/5.0)
     }
 
     "set average visit time per page correctly" in {
