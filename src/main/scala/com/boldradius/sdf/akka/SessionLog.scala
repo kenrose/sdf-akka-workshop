@@ -20,7 +20,7 @@ class SessionLog(args: Args) extends PdAkkaActor with SettingsExtension {
     }
 
     case ReceiveTimeout => {
-      args.statsActor ! "TODO REPLACE ME WITH RESULTS"
+      args.statsActor ! StatsAggregator.SessionData(requests)
       context.setReceiveTimeout(Duration.Undefined)
       context.stop(self)
     }

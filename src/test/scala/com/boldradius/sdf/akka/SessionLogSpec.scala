@@ -19,7 +19,7 @@ class SessionLogSpec extends BaseAkkaSpec {
 
       // Then expect that we receive a Timeout around the time of the original timeout.
       statsProbe.within((sessionTimeout / 2) - (250 milliseconds), (sessionTimeout / 2) + (250 milliseconds)) {
-        statsProbe.expectMsg("TODO REPLACE ME WITH RESULTS")
+        statsProbe.expectMsg(StatsAggregator.SessionData(Seq.empty))
       }
       system.stop(sessionLog)
     }
@@ -31,7 +31,7 @@ class SessionLogSpec extends BaseAkkaSpec {
 
       // Then expect that we receive a Timeout around the time of the original timeout.
       statsProbe.within(sessionTimeout - (250 milliseconds), sessionTimeout + (250 milliseconds)) {
-        statsProbe.expectMsg("TODO REPLACE ME WITH RESULTS")
+        statsProbe.expectMsg(StatsAggregator.SessionData(Seq.empty))
       }
       system.stop(sessionLog)
     }

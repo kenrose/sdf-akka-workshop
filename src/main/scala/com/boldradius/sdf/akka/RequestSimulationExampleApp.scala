@@ -14,8 +14,9 @@ object RequestSimulationExampleApp {
 }
 
 class RequestSimulationExampleApp(system: ActorSystem) {
+  val statsAggregator = PdAkkaActor.createActor(system, StatsAggregator.Args, Some("statsAggregator"))
   val producer = system.actorOf(RequestProducer.props(100), "producerActor")
-  val consumer = PdAkkaActor.createActor(system, Consumer.Args, Some("consumer"))
+  val consumer = PdAkkaActor.createActor(system, Consumer.Args(statsAggregator), Some("consumer"))
 
   def run(): Unit = {
     // Tell the producer to start working and to send messages to the consumer
