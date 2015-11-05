@@ -19,6 +19,7 @@ class Supervisor(args: Args) extends PdAkkaActor with SettingsExtension {
     val decider: SupervisorStrategy.Decider = {
       case NonFatal(ex) => {
         restartCount += 1
+        log.info(s"Caught exception.  restartCount=${restartCount}")
         if (restartCount > maxRestarts) {
           val message = s"Subordinate $subordinate failed $restartCount times. Stopping."
           args.emailSender ! EmailActor.SendEmail(opsTeamEmail, message)

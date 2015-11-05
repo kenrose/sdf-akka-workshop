@@ -7,6 +7,8 @@ import com.boldradius.sdf.akka.RequestProducer._
 import scala.io.StdIn
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.annotation.tailrec
+import scala.util.{Try, Success}
 
 object RequestSimulationExampleApp {
   def main(args: Array[String]): Unit = {
@@ -43,8 +45,9 @@ class RequestSimulationExampleApp(system: ActorSystem) {
     producer ! Start(consumer)
 
     // Wait for the user to hit <enter>
-    println("Hit <enter> to stop the simulation")
-    StdIn.readLine()
+    println("Hit <enter> to stop the simulation or a number to send <n> explode messages to StatsAggregator")
+
+    commandLoop()
 
     // Tell the producer to stop working
     producer ! Stop
@@ -52,5 +55,18 @@ class RequestSimulationExampleApp(system: ActorSystem) {
     // Terminate all actors and wait for graceful shutdown
     system.shutdown()
     system.awaitTermination(10 seconds)
+  }
+
+  @tailrec
+  private def commandLoop(): Unit = {
+    val line = StdIn.readLine()
+    Try(line.toInt) match {
+      case Success(numExplosions) => {
+        (1 to numExplosions).foreach { _ => (statsAggregator ! Explode)}
+        println(s"Sent ${numExplosions} explosions to StatsAggregator")
+        commandLoop()
+      }
+      case _ => ()
+    }
   }
 }
