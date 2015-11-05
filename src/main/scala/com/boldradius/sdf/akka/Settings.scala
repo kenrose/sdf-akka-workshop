@@ -11,6 +11,9 @@ class Settings(system: ExtendedActorSystem) extends Extension {
 
   val SUPERVISOR_RESTART_COUNT =
     system.settings.config.getInt("request-simulator.supervisor-restart-count")
+
+  val OPS_TEAM_EMAIL =
+    system.settings.config.getString("request-simulator.ops-team-email")
 }
 
 object Settings extends ExtensionKey[Settings]
