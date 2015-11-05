@@ -15,7 +15,7 @@ class StatsAggregator(args: Args.type) extends PdAkkaActor {
   var usersPerBrowser: UsersPerBrowser = Map.empty[String, Int]
   var usersPerReferrer: UsersPerReferrer = Map.empty[String, Int]
 
-  override def receive: Receive = handleSessionData.orElse(fetchData)
+  override def receive: Receive = handleSessionData.orElse(fetchData).orElse(Explode.kaboom)
 
   private def handleSessionData: Receive = {
     case SessionData(requests) => {
