@@ -45,7 +45,7 @@ trait TestFolder extends SuiteMixin { self: Suite =>
     do {
       folder = new File(tempFolder, "scalatest-" + System.nanoTime)
       triesLeft -= 1
-    } while (! folder.mkdir() && triesLeft > 0)
+    } while (!folder.mkdir() && triesLeft > 0)
 
     testFolder = folder
 
