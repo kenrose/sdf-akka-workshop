@@ -25,6 +25,9 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
 
       // Kickstart the session checking process
       self ! CheckSessions(consumer)
+
+    case CheckSessions(consumer) =>
+      log.debug("CheckSessions received.")
   }
 
   def producing: Receive = {
