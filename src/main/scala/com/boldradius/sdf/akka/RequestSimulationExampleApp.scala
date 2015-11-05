@@ -21,16 +21,5 @@ class RequestSimulationExampleApp(system: ActorSystem) {
   def run(): Unit = {
     // Tell the producer to start working and to send messages to the consumer
     producer ! Start(consumer)
-
-    // Wait for the user to hit <enter>
-    println("Hit <enter> to stop the simulation")
-    StdIn.readLine()
-
-    // Tell the producer to stop working
-    producer ! Stop
-
-    // Terminate all actors and wait for graceful shutdown
-    system.shutdown()
-    system.awaitTermination(10 seconds)
   }
 }
