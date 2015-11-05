@@ -21,7 +21,7 @@ trait TestPdAkkaActor extends PdAkkaActor {
 }
 
 class EmptyPdAkkaActor(args: EmptyPdAkkaActor.Args.type) extends PdAkkaActor {
-  override def receive: Receive = Actor.emptyBehavior
+  override def receive: Receive = Explode.kaboom
 }
 object EmptyPdAkkaActor {
   case object Args extends PdAkkaActor.Args(classOf[EmptyPdAkkaActor])
