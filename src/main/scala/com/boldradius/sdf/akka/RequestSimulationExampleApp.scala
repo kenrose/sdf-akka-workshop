@@ -43,7 +43,7 @@ class RequestSimulationExampleApp(system: ActorSystem) {
 
   def run(): Unit = {
     // Tell the producer to start working and to send messages to the consumer
-    producer ! Start(consumer)
+    // producer ! Start(consumer)
   }
 
   @tailrec
