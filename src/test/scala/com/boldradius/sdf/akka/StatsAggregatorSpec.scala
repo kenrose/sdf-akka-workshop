@@ -7,11 +7,16 @@ import com.boldradius.sdf.akka.StatsAggregator.{DataRequest, SessionData}
 import scala.collection.mutable.MutableList
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.reflect.io.File
 
 class StatsAggregatorSpec extends BaseAkkaSpec {
   implicit val timeout =  1 second: Timeout
 
   val BaseRequest = Request(1, 0, "url", "referrer", "browser")
+
+  override def beforeAll: Unit = {
+    File(Settings(system).SNAPSHOT_DIR).deleteRecursively()
+  }
 
   "Sending an empty SessionData to StatsAggregator" should {
     "not change anything" in {
@@ -48,7 +53,7 @@ class StatsAggregatorSpec extends BaseAkkaSpec {
       resp.response.get(browser2).get shouldBe 1
       resp.response.get(browser3) shouldBe None
 
-      
+
       requests.clear()
       val BaseRequest2 = BaseRequest.copy(sessionId = 2)
       requests += BaseRequest2.copy(browser = browser1)
