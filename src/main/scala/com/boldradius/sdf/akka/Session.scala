@@ -45,7 +45,7 @@ object Session {
     } yield value
   }
 
-  val longVisit  = 5 minutes
+  val longVisit  = 1 minute
   val shortVisit = 10 seconds
 
   // For more interesting data, we insert some deviation in our numbers

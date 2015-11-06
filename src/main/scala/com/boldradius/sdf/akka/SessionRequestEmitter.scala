@@ -1,11 +1,12 @@
 package com.boldradius.sdf.akka
 
 import akka.actor._
-import System.{currentTimeMillis => now}
-import SessionActor._
+
+import scala.concurrent.duration.FiniteDuration
 
 // Wraps around a session and emits requests to the target actor
-class SessionRequestEmitter(target: ActorRef) extends Actor with ActorLogging {
+import com.boldradius.sdf.akka.SessionRequestEmitter._
+class SessionRequestEmitter(args: Args) extends PdAkkaActor {
 
   import context.dispatcher
 
@@ -22,17 +23,16 @@ class SessionRequestEmitter(target: ActorRef) extends Actor with ActorLogging {
     case Click =>
       // Send a request to the target actor
       val request = session.request
-      target ! request
+      args.target ! request
 
       // Schedule a Click message to myself after some time visiting this page
-      val pageDuration = Session.randomPageTime(request.url)
+      val pageDuration = args.interval.getOrElse(Session.randomPageTime(request.url))
       context.system.scheduler.scheduleOnce(pageDuration, self, Click)
   }
 }
 
-object SessionActor {
-
-  def props(target: ActorRef) = Props(new SessionRequestEmitter(target))
+object SessionRequestEmitter {
+  case class Args(target: ActorRef, interval: Option[FiniteDuration]) extends PdAkkaActor.Args(classOf[SessionRequestEmitter])
 
   // Message protocol for the SessionActor
   case object Click

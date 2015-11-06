@@ -5,6 +5,7 @@ import akka.actor._
 import Consumer._
 import akka.cluster.{MemberStatus, Member, Cluster}
 import akka.cluster.ClusterEvent._
+import scala.concurrent.duration._
 
 class Consumer(args: Args) extends PdAkkaActor {
   val cluster = Cluster(context.system)
@@ -43,7 +44,7 @@ class Consumer(args: Args) extends PdAkkaActor {
 
   protected def findOrCreateSessionLog(sessionId: Long): ActorRef = {
     context.child(sessionId.toString).getOrElse {
-      createChild(SessionLog.Args(sessionId, args.statsActor), Some(sessionId.toString))
+      createChild(ThrottlingActor.Args(SessionLog.Args(sessionId, args.statsActor), 1, 1 minute), Some(sessionId.toString))
     }
   }
 }
