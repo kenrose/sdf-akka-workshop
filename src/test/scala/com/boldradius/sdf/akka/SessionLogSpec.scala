@@ -2,9 +2,19 @@ package com.boldradius.sdf.akka
 
 import akka.actor._
 import akka.testkit._
+import akka.actor.ActorDSL._
+import com.boldradius.sdf.akka.ChatActor.StartChat
 import scala.concurrent.duration._
 
 class SessionLogSpec extends BaseAkkaSpec {
+
+  class TestSessionLog(sessionID: Long, statsActor: ActorRef, chatActor: TestProbe) extends SessionLog(SessionLog.Args(sessionID, statsActor)) with TestPdAkkaActor {
+    override def createTestChild(actorArgs: PdAkkaActor.Args, actorName: Option[String]) = actorArgs match {
+      case ChatActor.Args =>
+        chatActor
+    }
+  }
+
   "Sending a non-handled message to SessionLog" should {
     "not reset the receiveTimeout" in {
       val statsProbe = TestProbe()

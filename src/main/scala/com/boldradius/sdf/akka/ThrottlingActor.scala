@@ -11,7 +11,7 @@ class ThrottlingActor(args: ThrottlingActor.Args) extends PdAkkaActor with Setti
 
   override def receive: Receive = {
     case GetSubordinate => sender() ! Subordinate(subordinate)
-    case msg: SessionLog.AppendRequest => throttle(msg)
+    case msg => throttle(msg)
   }
 
   def throttle(msg: Any): Unit = {

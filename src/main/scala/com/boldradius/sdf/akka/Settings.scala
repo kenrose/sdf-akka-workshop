@@ -14,6 +14,9 @@ class Settings(system: ExtendedActorSystem) extends Extension {
   val SUPERVISOR_STARTUP_TIMEOUT =
     Duration(system.settings.config.getDuration("request-simulator.supervisor-startup-timeout", Seconds), Seconds)
 
+  val HELP_PAGE_CHAT_TIMEOUT =
+    Duration(system.settings.config.getDuration("request-simulator.chat-actor.chat-timeout", Seconds), Seconds)
+
   val OPS_TEAM_EMAIL =
     system.settings.config.getString("request-simulator.ops-team-email")
 

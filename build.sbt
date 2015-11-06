@@ -20,3 +20,5 @@ libraryDependencies ++= Seq(
 
 fork in Test := true
 fork in run := true
+
+cancelable in Global := true
