@@ -3,6 +3,7 @@ package com.boldradius.sdf.akka
 import akka.actor._
 import System.{currentTimeMillis => now}
 import SessionActor._
+import scala.concurrent.duration._
 
 // Wraps around a session and emits requests to the target actor
 class DOSSessionActor(target: ActorRef) extends Actor with ActorLogging {
@@ -21,12 +22,11 @@ class DOSSessionActor(target: ActorRef) extends Actor with ActorLogging {
   override def receive = {
     case Click =>
       // Send a request to the target actor
-      val request = session.request
+      val request = session.request.copy(sessionId = 271)
       target ! request
 
       // Schedule a Click message to myself after some time visiting this page
-      val pageDuration = Session.randomPageTime(request.url)
-      context.system.scheduler.scheduleOnce(pageDuration, self, Click)
+      context.system.scheduler.scheduleOnce(5 milliseconds, self, Click)
   }
 }
 
