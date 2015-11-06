@@ -44,7 +44,7 @@ class Consumer(args: Args.type) extends PdAkkaActor {
 
   protected def findOrCreateSessionLog(sessionId: Long): ActorRef = {
     context.child(sessionId.toString).getOrElse {
-      createChild(ThrottlingActor.Args(SessionLog.Args(sessionId), 1, 1 minute), Some(sessionId.toString))
+      createChild(ThrottlingActor.Args(SessionLog.Args(sessionId), 3, 1 second), Some(sessionId.toString))
     }
   }
 }
