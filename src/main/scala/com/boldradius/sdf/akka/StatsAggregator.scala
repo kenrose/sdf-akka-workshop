@@ -3,9 +3,16 @@ package com.boldradius.sdf.akka
 import akka.actor._
 
 import StatsAggregator._
-import akka.persistence.{SaveSnapshotFailure, SaveSnapshotSuccess, SnapshotOffer, PersistentActor}
+import akka.contrib.pattern.{DistributedPubSubExtension, DistributedPubSubMediator}
+import akka.persistence.{SnapshotOffer, PersistentActor}
+import com.boldradius.sdf.akka.SessionLog.SessionEnded
 
-class StatsAggregator(args: Args.type) extends PdAkkaActor with PersistentActor {
+class StatsAggregator(args: Args.type) extends PdAkkaActor with PersistentActor with SettingsExtension {
+
+  import DistributedPubSubMediator.{ Subscribe, SubscribeAck }
+  val mediator = DistributedPubSubExtension(context.system).mediator
+  mediator ! Subscribe(settings.SESSION_PUBSUB_TOPIC, self)
+
   var state = State()
 
   private def fetchData: Receive = {
@@ -41,10 +48,14 @@ class StatsAggregator(args: Args.type) extends PdAkkaActor with PersistentActor 
     case SnapshotOffer(_, snapshot: State) => state = snapshot
   }
 
-  override def receiveCommand: Receive = handleSessionData.orElse(fetchData)
+  override def receiveCommand: Receive = handleSessionData.orElse(fetchData).orElse(subscribeAck)
+
+  private def subscribeAck: Receive = {
+    case SubscribeAck(Subscribe(topic, None, `self`)) => log.info(s"Subscribed to pubsub: ${topic}")
+  }
 
   private def handleSessionData: Receive = {
-    case SessionData(requests) => {
+    case SessionEnded(requests) => {
       log.info(s"Aggregating session data for ${requests.size} requests.")
       updateState(requests)
 
@@ -57,8 +68,6 @@ class StatsAggregator(args: Args.type) extends PdAkkaActor with PersistentActor 
 
 object StatsAggregator {
   case object Args extends PdAkkaActor.Args(classOf[StatsAggregator])
-
-  case class SessionData(requests: Seq[Request])
 
   type RequestsPerBrowser = Map[String, Int]  // [browser, num_requests]
   type RequestsByMinute = Map[Int, Int]  // [minute_starting_from_midnight, num_requests]

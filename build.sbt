@@ -15,8 +15,11 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence-experimental" % "2.3.14",
   "org.iq80.leveldb" % "leveldb" % "0.7",
   "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8",
-  "com.typesafe.akka" %% "akka-cluster"    % "2.3.14"
+  "com.typesafe.akka" %% "akka-cluster"    % "2.3.14",
+  "com.typesafe.akka" %% "akka-contrib"    % "2.3.14"
 )
 
 fork in Test := true
 fork in run := true
+
+cancelable in Global := true

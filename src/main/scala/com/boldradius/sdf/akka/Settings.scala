@@ -19,6 +19,8 @@ class Settings(system: ExtendedActorSystem) extends Extension {
 
   val SNAPSHOT_DIR =
     system.settings.config.getString("akka.persistence.snapshot-store.local.dir")
+
+  val SESSION_PUBSUB_TOPIC = system.settings.config.getString("session-pubsub-topic")
 }
 
 object Settings extends ExtensionKey[Settings]

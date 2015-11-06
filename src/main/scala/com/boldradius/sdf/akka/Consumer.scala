@@ -7,7 +7,7 @@ import akka.cluster.{MemberStatus, Member, Cluster}
 import akka.cluster.ClusterEvent._
 import scala.concurrent.duration._
 
-class Consumer(args: Args) extends PdAkkaActor {
+class Consumer(args: Args.type) extends PdAkkaActor {
   val cluster = Cluster(context.system)
 
   // subscribe to cluster changes, re-subscribe when restart
@@ -44,11 +44,11 @@ class Consumer(args: Args) extends PdAkkaActor {
 
   protected def findOrCreateSessionLog(sessionId: Long): ActorRef = {
     context.child(sessionId.toString).getOrElse {
-      createChild(ThrottlingActor.Args(SessionLog.Args(sessionId, args.statsActor), 1, 1 minute), Some(sessionId.toString))
+      createChild(ThrottlingActor.Args(SessionLog.Args(sessionId), 1, 1 minute), Some(sessionId.toString))
     }
   }
 }
 
 object Consumer {
-  case class Args(statsActor: ActorRef) extends PdAkkaActor.Args(classOf[Consumer])
+  case object Args extends PdAkkaActor.Args(classOf[Consumer])
 }
