@@ -32,5 +32,6 @@ class ConsumerApp(system: ActorSystem) {
   }
 
   val statsAggregator = createSupervisedActor(StatsAggregator.Args, "statsAggregator")
+  val realTimeStatsAggregator = createSupervisedActor(RealTimeStatsAggregator.Args, "realTimeStatsAggregator")
   val consumer = PdAkkaActor.createActor(system, Consumer.Args(statsAggregator), Some("consumer"))
 }

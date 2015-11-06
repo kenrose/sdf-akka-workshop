@@ -14,6 +14,8 @@ class ConsumerSpec extends BaseAkkaSpec {
         case args: SessionLog.Args if sessionLogs.contains(args.sessionId) =>
           assert(actorName.contains(args.sessionId.toString))
           sessionLogs(args.sessionId)
+        case args: ThrottlingActor.Args =>
+          createTestChild(args.subordinateArgs, actorName)
       }
     }
     def makeTestConsumer(sessionLogs: (Long, TestProbe)*) = new TestConsumer(sessionLogs.toMap)
