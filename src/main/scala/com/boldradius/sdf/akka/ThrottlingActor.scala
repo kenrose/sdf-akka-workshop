@@ -21,7 +21,7 @@ class ThrottlingActor(args: ThrottlingActor.Args) extends PdAkkaActor with Setti
       previousRequests = previousRequests :+ incomingTime
     } else if ((incomingTime - previousRequests.head) > args.period.toMillis) {
       subordinate.forward(msg)
-      previousRequests = previousRequests.drop(1) :+ incomingTime
+      previousRequests = previousRequests.dropWhile { _ < (incomingTime - args.period.toMillis) } :+ incomingTime
     } else {
       // drop this request on the floor
       log.warning(s"Dropped a request on the floor: $msg. Next opening for a request at ${previousRequests.head + args.period.toMillis}")
