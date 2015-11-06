@@ -18,28 +18,34 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
   def receive: Receive = stopped
 
   def stopped: Receive = {
-    case Start(target) =>
-
+    case ConsumerRegistration(consumer) =>
+      context.watch(consumer)
       // Move to a different state to avoid sending to more than one target
       context.become(producing)
 
       // Kickstart the session checking process
-      self ! CheckSessions(target)
+      self ! CheckSessions(consumer)
+
+    case CheckSessions(consumer) =>
+      log.debug("CheckSessions received.")
   }
 
   def producing: Receive = {
-    case CheckSessions(target) =>
+    case CheckSessions(consumer) =>
       // Check if more sessions need to be created, and schedule the next check
-      checkSessions(target)
-      context.system.scheduler.scheduleOnce(checkSessionInterval, self, CheckSessions(target))
+      checkSessions(consumer)
+      context.system.scheduler.scheduleOnce(checkSessionInterval, self, CheckSessions(consumer))
 
     case Stop =>
       log.debug("Stopping simulation")
       context.become(stopped)
+
+    case Terminated(consumer) =>
+      self ! Stop
   }
 
 
-  def checkSessions(target: ActorRef) {
+  def checkSessions(consumer: ActorRef) {
 
     // Check child actors, if not enough, create one more
     val activeSessions = context.children.size
@@ -47,7 +53,7 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
 
     if(activeSessions < concurrentSessions) {
       log.debug("Creating a new session")
-      context.actorOf(SessionActor.props(target))
+      context.actorOf(SessionActor.props(consumer))
     }
   }
 }
@@ -56,7 +62,7 @@ class RequestProducer(concurrentSessions:Int) extends Actor with ActorLogging {
 object RequestProducer {
 
   // Messaging protocol for the RequestProducer
-  case class Start(target: ActorRef)
+  case class ConsumerRegistration(consumer: ActorRef)
   case object Stop
   case class CheckSessions(target: ActorRef)
 
