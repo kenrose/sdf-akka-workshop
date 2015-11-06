@@ -3,7 +3,6 @@ package com.boldradius.sdf.akka
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
-import com.boldradius.sdf.akka.RequestProducer._
 import scala.io.StdIn
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -36,7 +35,7 @@ class RequestSimulationExampleApp(system: ActorSystem) {
     Await.result(res, Duration.Inf).subordinate
   }
 
-  val producer = system.actorOf(RequestProducer.props(100), "producerActor")
+  val producer = PdAkkaActor.createActor(system, RequestProducer.Args(100, None), Some("producerActor"))
 
   val statsAggregator = createSupervisedActor(StatsAggregator.Args, "statsAggregator")
   val consumer = PdAkkaActor.createActor(system, Consumer.Args(statsAggregator), Some("consumer"))

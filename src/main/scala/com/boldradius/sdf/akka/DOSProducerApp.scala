@@ -13,5 +13,5 @@ object DOSProducerApp {
 }
 
 class DOSProducerApp(system: ActorSystem) {
-  val producer = system.actorOf(RequestProducer.props(100), "producer")
+  val producer = PdAkkaActor.createActor(system, RequestProducer.Args(1, Some(5.milliseconds)), Some("producer"))
 }
