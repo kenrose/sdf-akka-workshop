@@ -7,13 +7,13 @@ import akka.util.Timeout
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-object ConsumerApp {
+object StatsAggregatorsApp {
   def main(args: Array[String]): Unit = {
-    new ConsumerApp(ActorSystem("ClusterSystem", ConfigFactory.load("consumer")))
+    new StatsAggregatorsApp(ActorSystem("ClusterSystem", ConfigFactory.load("stats_aggregators")))
   }
 }
 
-class ConsumerApp(system: ActorSystem) {
+class StatsAggregatorsApp(system: ActorSystem) {
   val settings = Settings(system)
   val emailSender = PdAkkaActor.createActor(system, EmailActor.Args, Some("emailer"))
   // creates a supervised actor
@@ -31,5 +31,6 @@ class ConsumerApp(system: ActorSystem) {
     Await.result(res, Duration.Inf).subordinate
   }
 
-  val consumer = PdAkkaActor.createActor(system, Consumer.Args, Some("consumer"))
+  val statsAggregator = createSupervisedActor(StatsAggregator.Args, "statsAggregator")
+  val realTimeStatsAggregator = createSupervisedActor(RealTimeStatsAggregator.Args, "realTimeStatsAggregator")
 }

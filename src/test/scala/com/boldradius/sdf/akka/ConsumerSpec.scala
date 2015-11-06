@@ -9,7 +9,7 @@ class ConsumerSpec extends BaseAkkaSpec {
 
   "Sending a Request to Consumer" should {
 
-    class TestConsumer(sessionLogs: Map[Long, TestProbe]) extends Consumer(Consumer.Args(system.deadLetters)) with TestPdAkkaActor {
+    class TestConsumer(sessionLogs: Map[Long, TestProbe]) extends Consumer(Consumer.Args) with TestPdAkkaActor {
       override def createTestChild(actorArgs: PdAkkaActor.Args, actorName: Option[String]) = actorArgs match {
         case args: SessionLog.Args if sessionLogs.contains(args.sessionId) =>
           assert(actorName.contains(args.sessionId.toString))
@@ -23,7 +23,7 @@ class ConsumerSpec extends BaseAkkaSpec {
     "result in creating a SessionLog" in {
       val sessionId = 1L
       val request = Request(sessionId, 0 /* timestamp */, "url", "referrer", "browser")
-      val consumer = PdAkkaActor.createActor(system, Consumer.Args(system.deadLetters), Some("consumer-create-session-log"))
+      val consumer = PdAkkaActor.createActor(system, Consumer.Args, Some("consumer-create-session-log"))
 
       consumer ! request
       TestProbe().expectActor(s"/user/consumer-create-session-log/${sessionId}")
