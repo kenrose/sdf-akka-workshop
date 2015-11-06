@@ -13,7 +13,6 @@ class RealTimeStatsAggregator(args: Args.type) extends PdAkkaActor {
     case StatsAggregator.SessionData(requests) =>
       lastRequests = lastRequests - requests.head.sessionId
     case DataRequest =>
-      println(s"Data request, lastRequests is $lastRequests")
       sender() ! DataResponse(
         lastRequests.size,
         lastRequests.groupBy(_._2.url).transform { (k, v) => v.size },
