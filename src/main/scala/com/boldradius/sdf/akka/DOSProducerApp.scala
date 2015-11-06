@@ -8,7 +8,7 @@ import scala.concurrent.duration._
 
 object DOSProducerApp {
   def main(args: Array[String]): Unit = {
-    new ProducerApp(ActorSystem("ClusterSystem", ConfigFactory.load("dos_producer")))
+    new DOSProducerApp(ActorSystem("ClusterSystem", ConfigFactory.load("dos_producer")))
   }
 }
 
