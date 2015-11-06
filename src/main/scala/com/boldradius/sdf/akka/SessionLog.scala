@@ -14,9 +14,10 @@ class SessionLog(args: Args) extends PdAkkaActor with SettingsExtension {
   context.setReceiveTimeout(sessionTimeout)
 
   override def receive: Receive = {
-    case AppendRequest(request) => {
+    case a @ AppendRequest(request) => {
       log.info(s"Appending request with URL ${request.url} to session ${args.sessionId}")
       requests += request
+      args.statsActor ! a
     }
 
     case ReceiveTimeout => {
